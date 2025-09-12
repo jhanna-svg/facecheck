@@ -637,6 +637,201 @@ def dashboard():
     return "Unknown role", 400
 
 
+# ---------------------
+# Faculty utilities
+# ---------------------
+def require_login_role(role_required):
+    def decorator(fn):
+        def wrapper(*args, **kwargs):
+            if "user_id" not in session:
+                return redirect(url_for("login"))
+            if session.get("role") != role_required:
+                return "Forbidden", 403
+            return fn(*args, **kwargs)
+        wrapper.__name__ = fn.__name__
+        return wrapper
+    return decorator
+
+
+# ---------------------
+# Faculty: Attendance pages
+# ---------------------
+@app.route("/attendance/logs")
+@require_login_role("faculty")
+def attendance_logs():
+    # Basic recent attendance records joined for display
+    records = (
+        db.session.query(Attendance, StudentClass, Class, Student, User)
+        .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+        .join(Class, StudentClass.class_id == Class.class_id)
+        .join(Student, StudentClass.student_id == Student.student_id)
+        .join(User, Student.user_id == User.user_id)
+        .order_by(Attendance.attendance_date.desc())
+        .limit(200)
+        .all()
+    )
+    return render_template("faculty/logs.html", records=records)
+
+
+@app.route("/attendance/filter")
+@require_login_role("faculty")
+def attendance_filter():
+    class_code = request.args.get("class", "").strip()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+
+    q = (
+        db.session.query(Attendance, StudentClass, Class, Student, User)
+        .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+        .join(Class, StudentClass.class_id == Class.class_id)
+        .join(Student, StudentClass.student_id == Student.student_id)
+        .join(User, Student.user_id == User.user_id)
+    )
+    if class_code:
+        q = q.filter(Class.edpcode == class_code)
+    if start_date:
+        try:
+            dt = datetime.fromisoformat(start_date)
+            q = q.filter(Attendance.attendance_date >= dt)
+        except Exception:
+            pass
+    if end_date:
+        try:
+            dt2 = datetime.fromisoformat(end_date)
+            q = q.filter(Attendance.attendance_date <= dt2)
+        except Exception:
+            pass
+    q = q.order_by(Attendance.attendance_date.desc()).limit(1000)
+    records = q.all()
+    return render_template("faculty/filter.html", records=records, class_code=class_code, start_date=start_date, end_date=end_date)
+
+
+@app.route("/attendance/edit", methods=["GET", "POST"])
+@require_login_role("faculty")
+def attendance_edit():
+    if request.method == "POST":
+        att_id = request.form.get("attendance_id")
+        new_status = request.form.get("attendance_status", "").strip()
+        if att_id and new_status:
+            att = Attendance.query.get(int(att_id))
+            if att:
+                att.attendance_status = new_status
+                db.session.commit()
+        return redirect(url_for("attendance_edit"))
+
+    # GET
+    records = (
+        db.session.query(Attendance, StudentClass, Class, Student, User)
+        .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+        .join(Class, StudentClass.class_id == Class.class_id)
+        .join(Student, StudentClass.student_id == Student.student_id)
+        .join(User, Student.user_id == User.user_id)
+        .order_by(Attendance.attendance_date.desc())
+        .limit(200)
+        .all()
+    )
+    return render_template("faculty/edit.html", records=records)
+
+
+@app.route("/classes/events")
+@require_login_role("faculty")
+def classes_events():
+    # Show events created by this faculty
+    user = User.query.get(session.get("user_id"))
+    faculty = Faculty.query.filter_by(user_id=user.user_id).first()
+    events = Event.query.filter_by(faculty_id=faculty.faculty_id).order_by(Event.event_date.desc()).all() if faculty else []
+    return render_template("faculty/events.html", events=events)
+
+
+# ---------------------
+# Exports
+# ---------------------
+def _attendance_query_for_export():
+    return (
+        db.session.query(Attendance, StudentClass, Class, Student, User)
+        .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+        .join(Class, StudentClass.class_id == Class.class_id)
+        .join(Student, StudentClass.student_id == Student.student_id)
+        .join(User, Student.user_id == User.user_id)
+        .order_by(Attendance.attendance_date.desc())
+    )
+
+
+@app.route("/attendance/export/csv")
+@require_login_role("faculty")
+def export_attendance_csv():
+    import csv
+    from flask import Response
+
+    rows = _attendance_query_for_export().all()
+    def generate():
+        yield "attendance_id,attendance_date,status,class_code,class_name,student_id,student_name\n"
+        for att, sc, clz, stu, usr in rows:
+            student_name = f"{usr.firstname} {usr.lastname}"
+            yield f"{att.attendance_id},{att.attendance_date.isoformat()},{att.attendance_status},{clz.edpcode},{clz.class_name},{usr.idno}," + student_name + "\n"
+
+    return Response(generate(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=attendance.csv"})
+
+
+@app.route("/attendance/export/pdf")
+@require_login_role("faculty")
+def export_attendance_pdf():
+    # Simple fallback: return CSV but with .pdf name for now
+    resp = export_attendance_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=attendance.pdf"
+    return resp
+
+
+@app.route("/attendance/export/excel")
+@require_login_role("faculty")
+def export_attendance_excel():
+    # Simple fallback to CSV labeled as .xlsx for initial functionality
+    resp = export_attendance_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=attendance.xlsx"
+    return resp
+
+
+# Reports
+@app.route("/attendance/reports")
+@require_login_role("faculty")
+def attendance_reports():
+    return render_template("faculty/reports.html")
+
+
+@app.route("/reports/class-summaries")
+@require_login_role("faculty")
+def reports_class_summaries():
+    # Basic aggregates per class
+    from sqlalchemy import func
+    data = (
+        db.session.query(Class.class_name, Class.edpcode, func.count(Attendance.attendance_id))
+        .join(StudentClass, StudentClass.class_id == Class.class_id)
+        .join(Attendance, Attendance.studentclass_id == StudentClass.studentclass_id)
+        .group_by(Class.class_id)
+        .all()
+    )
+    return render_template("faculty/class_summaries.html", rows=data)
+
+
+@app.route("/reports/absence-patterns")
+@require_login_role("faculty")
+def reports_absence_patterns():
+    return render_template("faculty/absence_patterns.html")
+
+
+@app.route("/reports/monthly-graphs")
+@require_login_role("faculty")
+def reports_monthly_graphs():
+    return render_template("faculty/monthly_graphs.html")
+
+
+@app.route("/reports/export/<fmt>")
+@require_login_role("faculty")
+def export_analytics(fmt):
+    # Reuse attendance CSV for all for now
+    return export_attendance_csv()
+
+
 if __name__ == "__main__":
     import signal
     import sys

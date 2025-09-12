@@ -158,6 +158,104 @@
             </div>
         </div>
 
+        <!-- Attendance Management Section -->
+        <div class="mb-8">
+            <h3 class="text-2xl font-bold text-primary-900 mb-6">Attendance Management</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Attendance Monitoring -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-200">
+                    <div class="flex items-center mb-4">
+                        <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-lg font-semibold text-primary-900 ml-3">Attendance Monitoring</h4>
+                    </div>
+                    <p class="text-primary-600 mb-4">View logs, filter data, edit records, and manage class events.</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <a class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg font-medium transition-colors duration-200 text-sm text-center inline-block" href="/attendance/logs">
+                            View Logs
+                        </a>
+                        <a class="bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-3 rounded-lg font-medium transition-colors duration-200 text-sm text-center inline-block" href="/attendance/filter">
+                            Filter Data
+                        </a>
+                        <a class="bg-orange-600 hover:bg-orange-700 text-white py-2 px-3 rounded-lg font-medium transition-colors duration-200 text-sm text-center inline-block" href="/attendance/edit">
+                            Edit Records
+                        </a>
+                        <a class="bg-pink-600 hover:bg-pink-700 text-white py-2 px-3 rounded-lg font-medium transition-colors duration-200 text-sm text-center inline-block" href="/classes/events">
+                            Class & Events
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Reports & Analytics -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-200">
+                    <div class="flex items-center mb-4">
+                        <div class="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-lg font-semibold text-primary-900 ml-3">Reports & Analytics</h4>
+                    </div>
+                    <p class="text-primary-600 mb-4">Generate reports, analyze patterns, view graphs, and export data.</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg font-medium transition-colors duration-200 text-sm" onclick="generateReports()">
+                            Generate Reports
+                        </button>
+                        <button class="bg-teal-600 hover:bg-teal-700 text-white py-2 px-3 rounded-lg font-medium transition-colors duration-200 text-sm" onclick="generateClassSummaries()">
+                            Class Summaries
+                        </button>
+                        <button class="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg font-medium transition-colors duration-200 text-sm" onclick="analyzeAbsencePatterns()">
+                            Absence Patterns
+                        </button>
+                        <button class="bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-3 rounded-lg font-medium transition-colors duration-200 text-sm" onclick="viewMonthlyGraphs()">
+                            Monthly Graphs
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Tools Section -->
+        <div class="mb-8">
+            <h3 class="text-2xl font-bold text-primary-900 mb-6">Export Tools</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Export Attendance Data -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-200">
+                    <div class="flex items-center mb-4">
+                        <div class="h-12 w-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-lg font-semibold text-primary-900 ml-3">Export Attendance Data</h4>
+                    </div>
+                    <p class="text-primary-600 mb-4">Export attendance records to PDF, Excel, or CSV format.</p>
+                    <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200" onclick="exportAttendance()">
+                        Export Attendance
+                    </button>
+                </div>
+
+                <!-- Export Analytics Reports -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-200">
+                    <div class="flex items-center mb-4">
+                        <div class="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-lg font-semibold text-primary-900 ml-3">Export Analytics Reports</h4>
+                    </div>
+                    <p class="text-primary-600 mb-4">Export analytics and reports to PDF, Excel, or CSV format.</p>
+                    <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200" onclick="exportAnalyticsReports()">
+                        Export Analytics
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Footer -->
         <footer class="text-center py-4">
             <p class="text-primary-400 text-sm">
@@ -184,22 +282,19 @@
     </div>
 
     <script>
-        // Show success notification
-        {% if user.just_logged_in %}
+        // Show success notification if element exists
         window.addEventListener('load', function() {
             const notification = document.getElementById('successNotification');
+            if (!notification) return;
             setTimeout(() => {
                 notification.classList.remove('translate-x-full');
                 notification.classList.add('translate-x-0');
             }, 100);
-            
-            // Auto-hide after 4 seconds
             setTimeout(() => {
                 notification.classList.remove('translate-x-0');
                 notification.classList.add('translate-x-full');
             }, 4000);
         });
-        {% endif %}
 
         function showClassCodeDialog() {
             document.getElementById('classCodeModal').classList.remove('hidden');
@@ -223,6 +318,189 @@
             if (confirm('This will update the face recognition model with all registered student faces. Continue?')) {
                 window.location.href = '/train';
             }
+        }
+
+        // Attendance Monitoring Functions
+        function viewDailyLogs() {
+            window.location.href = '/attendance/logs';
+        }
+
+        function generateReports() {
+            window.location.href = '/attendance/reports';
+        }
+
+        function openFilterDialog() {
+            // Create a simple filter dialog
+            const filterModal = document.createElement('div');
+            filterModal.className = 'fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50';
+            filterModal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+                    <h3 class="text-xl font-bold text-primary-900 mb-4">Filter Attendance Data</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-primary-600 mb-2">Class/Event</label>
+                            <input type="text" id="filterClass" placeholder="e.g., CS101, MATH202" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-primary-600 mb-2">Start Date</label>
+                            <input type="date" id="filterStartDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-primary-600 mb-2">End Date</label>
+                            <input type="date" id="filterEndDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="applyFilter()" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                            Apply Filter
+                        </button>
+                        <button onclick="closeFilterDialog()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(filterModal);
+        }
+
+        function closeFilterDialog() {
+            const filterModal = document.querySelector('.fixed.inset-0.bg-gray-900');
+            if (filterModal) {
+                filterModal.remove();
+            }
+        }
+
+        function applyFilter() {
+            const classFilter = document.getElementById('filterClass').value;
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+            
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (classFilter) params.append('class', classFilter);
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+            
+            window.location.href = `/attendance/filter?${params.toString()}`;
+        }
+
+        function editAttendance() {
+            window.location.href = '/attendance/edit';
+        }
+
+        function exportAttendance() {
+            // Create export options dialog
+            const exportModal = document.createElement('div');
+            exportModal.className = 'fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50';
+            exportModal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+                    <h3 class="text-xl font-bold text-primary-900 mb-4">Export Attendance Data</h3>
+                    <p class="text-primary-600 mb-4">Choose the format for your attendance export:</p>
+                    <div class="space-y-3">
+                        <button onclick="exportToPDF()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                            Export to PDF
+                        </button>
+                        <button onclick="exportToExcel()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                            Export to Excel
+                        </button>
+                        <button onclick="exportToCSV()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                            Export to CSV
+                        </button>
+                    </div>
+                    <button onclick="closeExportDialog()" class="w-full mt-4 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(exportModal);
+        }
+
+        function closeExportDialog() {
+            const exportModal = document.querySelector('.fixed.inset-0.bg-gray-900');
+            if (exportModal) {
+                exportModal.remove();
+            }
+        }
+
+        function exportToPDF() {
+            window.location.href = '/attendance/export/pdf';
+            closeExportDialog();
+        }
+
+        function exportToExcel() {
+            window.location.href = '/attendance/export/excel';
+            closeExportDialog();
+        }
+
+        function exportToCSV() {
+            window.location.href = '/attendance/export/csv';
+            closeExportDialog();
+        }
+
+        function viewClassEvents() {
+            window.location.href = '/classes/events';
+        }
+
+        // Reports and Analytics Functions
+        function generateClassSummaries() {
+            window.location.href = '/reports/class-summaries';
+        }
+
+        function analyzeAbsencePatterns() {
+            window.location.href = '/reports/absence-patterns';
+        }
+
+        function viewMonthlyGraphs() {
+            window.location.href = '/reports/monthly-graphs';
+        }
+
+        function exportAnalyticsReports() {
+            // Create analytics export options dialog
+            const analyticsModal = document.createElement('div');
+            analyticsModal.className = 'fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50';
+            analyticsModal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+                    <h3 class="text-xl font-bold text-primary-900 mb-4">Export Analytics Reports</h3>
+                    <p class="text-primary-600 mb-4">Choose the format for your analytics export:</p>
+                    <div class="space-y-3">
+                        <button onclick="exportAnalyticsToPDF()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                            Export to PDF
+                        </button>
+                        <button onclick="exportAnalyticsToExcel()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                            Export to Excel
+                        </button>
+                        <button onclick="exportAnalyticsToCSV()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                            Export to CSV
+                        </button>
+                    </div>
+                    <button onclick="closeAnalyticsDialog()" class="w-full mt-4 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(analyticsModal);
+        }
+
+        function closeAnalyticsDialog() {
+            const analyticsModal = document.querySelector('.fixed.inset-0.bg-gray-900');
+            if (analyticsModal) {
+                analyticsModal.remove();
+            }
+        }
+
+        function exportAnalyticsToPDF() {
+            window.location.href = '/reports/export/pdf';
+            closeAnalyticsDialog();
+        }
+
+        function exportAnalyticsToExcel() {
+            window.location.href = '/reports/export/excel';
+            closeAnalyticsDialog();
+        }
+
+        function exportAnalyticsToCSV() {
+            window.location.href = '/reports/export/csv';
+            closeAnalyticsDialog();
         }
     </script>
 </body>
