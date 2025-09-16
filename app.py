@@ -791,45 +791,508 @@ def export_attendance_excel():
     return resp
 
 
-# Reports
-@app.route("/attendance/reports")
+# ---------------------
+# Faculty: Page-specific Export Routes
+# ---------------------
+
+# Logs page exports
+@app.route("/attendance/logs/export/csv")
 @require_login_role("faculty")
-def attendance_reports():
-    return render_template("faculty/reports.html")
+def export_logs_csv():
+    import csv
+    from flask import Response
+
+    rows = _attendance_query_for_export().limit(200).all()
+    def generate():
+        yield "attendance_id,attendance_date,status,class_code,class_name,student_id,student_name\n"
+        for att, sc, clz, stu, usr in rows:
+            student_name = f"{usr.firstname} {usr.lastname}"
+            yield f"{att.attendance_id},{att.attendance_date.isoformat()},{att.attendance_status},{clz.edpcode},{clz.class_name},{usr.idno}," + student_name + "\n"
+
+    return Response(generate(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=attendance_logs.csv"})
+
+
+@app.route("/attendance/logs/export/pdf")
+@require_login_role("faculty")
+def export_logs_pdf():
+    resp = export_logs_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=attendance_logs.pdf"
+    return resp
+
+
+@app.route("/attendance/logs/export/excel")
+@require_login_role("faculty")
+def export_logs_excel():
+    resp = export_logs_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=attendance_logs.xlsx"
+    return resp
+
+
+# Filter page exports (with filter parameters)
+@app.route("/attendance/filter/export/csv")
+@require_login_role("faculty")
+def export_filter_csv():
+    import csv
+    from flask import Response
+
+    class_code = request.args.get("class", "").strip()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+
+    q = _attendance_query_for_export()
+    if class_code:
+        q = q.filter(Class.edpcode == class_code)
+    if start_date:
+        try:
+            dt = datetime.fromisoformat(start_date)
+            q = q.filter(Attendance.attendance_date >= dt)
+        except Exception:
+            pass
+    if end_date:
+        try:
+            dt2 = datetime.fromisoformat(end_date)
+            q = q.filter(Attendance.attendance_date <= dt2)
+        except Exception:
+            pass
+    
+    rows = q.limit(1000).all()
+    
+    def generate():
+        yield "attendance_id,attendance_date,status,class_code,class_name,student_id,student_name\n"
+        for att, sc, clz, stu, usr in rows:
+            student_name = f"{usr.firstname} {usr.lastname}"
+            yield f"{att.attendance_id},{att.attendance_date.isoformat()},{att.attendance_status},{clz.edpcode},{clz.class_name},{usr.idno}," + student_name + "\n"
+
+    return Response(generate(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=filtered_attendance.csv"})
+
+
+@app.route("/attendance/filter/export/pdf")
+@require_login_role("faculty")
+def export_filter_pdf():
+    resp = export_filter_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=filtered_attendance.pdf"
+    return resp
+
+
+@app.route("/attendance/filter/export/excel")
+@require_login_role("faculty")
+def export_filter_excel():
+    resp = export_filter_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=filtered_attendance.xlsx"
+    return resp
+
+
+# Edit page exports
+@app.route("/attendance/edit/export/csv")
+@require_login_role("faculty")
+def export_edit_csv():
+    import csv
+    from flask import Response
+
+    rows = _attendance_query_for_export().limit(200).all()
+    def generate():
+        yield "attendance_id,attendance_date,status,class_code,class_name,student_id,student_name\n"
+        for att, sc, clz, stu, usr in rows:
+            student_name = f"{usr.firstname} {usr.lastname}"
+            yield f"{att.attendance_id},{att.attendance_date.isoformat()},{att.attendance_status},{clz.edpcode},{clz.class_name},{usr.idno}," + student_name + "\n"
+
+    return Response(generate(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=edit_attendance.csv"})
+
+
+@app.route("/attendance/edit/export/pdf")
+@require_login_role("faculty")
+def export_edit_pdf():
+    resp = export_edit_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=edit_attendance.pdf"
+    return resp
+
+
+@app.route("/attendance/edit/export/excel")
+@require_login_role("faculty")
+def export_edit_excel():
+    resp = export_edit_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=edit_attendance.xlsx"
+    return resp
+
+
+# Events page exports
+@app.route("/classes/events/export/csv")
+@require_login_role("faculty")
+def export_events_csv():
+    import csv
+    from flask import Response
+
+    # Get events for this faculty
+    user = User.query.get(session.get("user_id"))
+    faculty = Faculty.query.filter_by(user_id=user.user_id).first()
+    events = Event.query.filter_by(faculty_id=faculty.faculty_id).order_by(Event.event_date.desc()).all() if faculty else []
+    
+    def generate():
+        yield "event_id,event_name,description,event_date,start_time,end_time,room\n"
+        for event in events:
+            yield f"{event.event_id},{event.event_name},{event.desc or ''},{event.event_date.isoformat()},{event.start_time},{event.end_time},{event.room}\n"
+
+    return Response(generate(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=events.csv"})
+
+
+@app.route("/classes/events/export/pdf")
+@require_login_role("faculty")
+def export_events_pdf():
+    resp = export_events_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=events.pdf"
+    return resp
+
+
+@app.route("/classes/events/export/excel")
+@require_login_role("faculty")
+def export_events_excel():
+    resp = export_events_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=events.xlsx"
+    return resp
+
+
+# Reports page exports
+@app.route("/reports/export/csv")
+@require_login_role("faculty")
+def export_reports_csv():
+    import csv
+    from flask import Response
+
+    class_filter = request.args.get("class", "").strip()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+
+    # Get class summaries
+    q = (
+        db.session.query(Class, db.func.count(Attendance.attendance_id).label('total'))
+        .join(StudentClass, Class.class_id == StudentClass.class_id)
+        .join(Attendance, StudentClass.studentclass_id == Attendance.studentclass_id)
+    )
+    
+    if class_filter:
+        q = q.filter(Class.class_name == class_filter)
+    if start_date:
+        try:
+            dt = datetime.fromisoformat(start_date)
+            q = q.filter(Attendance.attendance_date >= dt)
+        except Exception:
+            pass
+    if end_date:
+        try:
+            dt2 = datetime.fromisoformat(end_date)
+            q = q.filter(Attendance.attendance_date <= dt2)
+        except Exception:
+            pass
+    
+    q = q.group_by(Class.class_id, Class.class_name, Class.edpcode)
+    class_summaries = q.all()
+    
+    def generate():
+        yield "class_name,edp_code,total_attendance_entries\n"
+        for class_obj, total in class_summaries:
+            yield f"{class_obj.class_name},{class_obj.edpcode},{total}\n"
+
+    return Response(generate(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=reports_analytics.csv"})
+
+
+@app.route("/reports/export/pdf")
+@require_login_role("faculty")
+def export_reports_pdf():
+    resp = export_reports_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=reports_analytics.pdf"
+    return resp
+
+
+@app.route("/reports/export/excel")
+@require_login_role("faculty")
+def export_reports_excel():
+    resp = export_reports_csv()
+    resp.headers["Content-Disposition"] = "attachment; filename=reports_analytics.xlsx"
+    return resp
+
+
+# ---------------------
+# Faculty: Reports & Analytics
+# ---------------------
+@app.route("/reports/overview")
+@require_login_role("faculty")
+def reports_overview():
+    """Display the reports overview page with links to different report types"""
+    # Get user information for the template
+    user = User.query.get(session["user_id"])
+    if not user:
+        return redirect(url_for("login"))
+    
+    # Prepare user data for template
+    user_data = {
+        "id": user.user_id,
+        "username": user.idno,
+        "full_name": user.full_name,
+        "email": None,  # Not in new schema
+        "role": user.role,
+        "year_level": user.student.year_level if user.student else None,
+        "course": user.student.course.course_name if user.student and user.student.course else None,
+        "face_registered": user.student.face_registered if user.student else False,
+        "created_at": user.created_at,
+    }
+    
+    return render_template("faculty/reports_overview.html", user=user_data)
 
 
 @app.route("/reports/class-summaries")
 @require_login_role("faculty")
 def reports_class_summaries():
-    # Basic aggregates per class
-    from sqlalchemy import func
-    data = (
-        db.session.query(Class.class_name, Class.edpcode, func.count(Attendance.attendance_id))
-        .join(StudentClass, StudentClass.class_id == Class.class_id)
-        .join(Attendance, Attendance.studentclass_id == StudentClass.studentclass_id)
-        .group_by(Class.class_id)
-        .all()
-    )
-    return render_template("faculty/class_summaries.html", rows=data)
+    """Display class summaries report"""
+    user = User.query.get(session["user_id"])
+    if not user:
+        return redirect(url_for("login"))
+    
+    user_data = {
+        "id": user.user_id,
+        "username": user.idno,
+        "full_name": user.full_name,
+        "email": None,
+        "role": user.role,
+        "year_level": user.student.year_level if user.student else None,
+        "course": user.student.course.course_name if user.student and user.student.course else None,
+        "face_registered": user.student.face_registered if user.student else False,
+        "created_at": user.created_at,
+    }
+    
+    return render_template("faculty/class_summaries.html", user=user_data)
 
 
 @app.route("/reports/absence-patterns")
 @require_login_role("faculty")
 def reports_absence_patterns():
-    return render_template("faculty/absence_patterns.html")
+    """Display absence patterns report"""
+    user = User.query.get(session["user_id"])
+    if not user:
+        return redirect(url_for("login"))
+    
+    user_data = {
+        "id": user.user_id,
+        "username": user.idno,
+        "full_name": user.full_name,
+        "email": None,
+        "role": user.role,
+        "year_level": user.student.year_level if user.student else None,
+        "course": user.student.course.course_name if user.student and user.student.course else None,
+        "face_registered": user.student.face_registered if user.student else False,
+        "created_at": user.created_at,
+    }
+    
+    return render_template("faculty/absence_patterns.html", user=user_data)
 
 
 @app.route("/reports/monthly-graphs")
 @require_login_role("faculty")
 def reports_monthly_graphs():
-    return render_template("faculty/monthly_graphs.html")
+    """Display monthly graphs report"""
+    user = User.query.get(session["user_id"])
+    if not user:
+        return redirect(url_for("login"))
+    
+    user_data = {
+        "id": user.user_id,
+        "username": user.idno,
+        "full_name": user.full_name,
+        "email": None,
+        "role": user.role,
+        "year_level": user.student.year_level if user.student else None,
+        "course": user.student.course.course_name if user.student and user.student.course else None,
+        "face_registered": user.student.face_registered if user.student else False,
+        "created_at": user.created_at,
+    }
+    
+    return render_template("faculty/monthly_graphs.html", user=user_data)
 
 
-@app.route("/reports/export/<fmt>")
+# ---------------------
+# API Routes for Reports
+# ---------------------
+
+@app.route("/api/classes/list")
 @require_login_role("faculty")
-def export_analytics(fmt):
-    # Reuse attendance CSV for all for now
-    return export_attendance_csv()
+def api_classes_list():
+    """API endpoint to get list of classes for filter dropdown"""
+    try:
+        classes = Class.query.all()
+        events = Event.query.all()
+        
+        class_list = []
+        for cls in classes:
+            class_list.append({
+                "class_name": cls.class_name,
+                "edpcode": cls.edpcode
+            })
+        
+        for event in events:
+            class_list.append({
+                "event_name": event.event_name,
+                "edpcode": event.event_name
+            })
+        
+        return jsonify(class_list)
+    except Exception as e:
+        return jsonify([]), 500
+
+
+@app.route("/api/reports/class-summaries")
+@require_login_role("faculty")
+def api_reports_class_summaries():
+    """API endpoint for class summaries data"""
+    try:
+        class_filter = request.args.get("class", "").strip()
+        start_date = request.args.get("start_date", "").strip()
+        end_date = request.args.get("end_date", "").strip()
+
+        # Get class summaries
+        q = (
+            db.session.query(Class, db.func.count(Attendance.attendance_id).label('total'))
+            .join(StudentClass, Class.class_id == StudentClass.class_id)
+            .join(Attendance, StudentClass.studentclass_id == Attendance.studentclass_id)
+        )
+        
+        if class_filter:
+            q = q.filter(Class.class_name == class_filter)
+        if start_date:
+            try:
+                dt = datetime.fromisoformat(start_date)
+                q = q.filter(Attendance.attendance_date >= dt)
+            except Exception:
+                pass
+        if end_date:
+            try:
+                dt2 = datetime.fromisoformat(end_date)
+                q = q.filter(Attendance.attendance_date <= dt2)
+            except Exception:
+                pass
+        
+        q = q.group_by(Class.class_id, Class.class_name, Class.edpcode)
+        class_summaries = q.all()
+        
+        result = []
+        for class_obj, total in class_summaries:
+            result.append({
+                "class_name": class_obj.class_name,
+                "edpcode": class_obj.edpcode,
+                "total": total
+            })
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify([]), 500
+
+
+@app.route("/api/reports/absence-patterns")
+@require_login_role("faculty")
+def api_reports_absence_patterns():
+    """API endpoint for absence patterns data"""
+    try:
+        class_filter = request.args.get("class", "").strip()
+        start_date = request.args.get("start_date", "").strip()
+        end_date = request.args.get("end_date", "").strip()
+
+        # Get absence data by date
+        q = (
+            db.session.query(
+                db.func.date(Attendance.attendance_date).label('date'),
+                db.func.count(Attendance.attendance_id).label('count')
+            )
+            .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+            .join(Class, StudentClass.class_id == Class.class_id)
+            .filter(Attendance.attendance_status == 'Absent')
+        )
+        
+        if class_filter:
+            q = q.filter(Class.class_name == class_filter)
+        if start_date:
+            try:
+                dt = datetime.fromisoformat(start_date)
+                q = q.filter(Attendance.attendance_date >= dt)
+            except Exception:
+                pass
+        if end_date:
+            try:
+                dt2 = datetime.fromisoformat(end_date)
+                q = q.filter(Attendance.attendance_date <= dt2)
+            except Exception:
+                pass
+        
+        q = q.group_by(db.func.date(Attendance.attendance_date)).order_by(db.func.date(Attendance.attendance_date))
+        absence_data = q.all()
+        
+        labels = []
+        values = []
+        for date_obj, count in absence_data:
+            labels.append(date_obj.strftime('%Y-%m-%d'))
+            values.append(count)
+        
+        return jsonify({
+            "labels": labels,
+            "values": values
+        })
+    except Exception as e:
+        return jsonify({
+            "labels": [],
+            "values": []
+        }), 500
+
+
+@app.route("/api/reports/monthly-graphs")
+@require_login_role("faculty")
+def api_reports_monthly_graphs():
+    """API endpoint for monthly graphs data"""
+    try:
+        class_filter = request.args.get("class", "").strip()
+        start_date = request.args.get("start_date", "").strip()
+        end_date = request.args.get("end_date", "").strip()
+
+        # Get monthly attendance data
+        q = (
+            db.session.query(
+                db.func.strftime('%Y-%m', Attendance.attendance_date).label('month'),
+                db.func.count(Attendance.attendance_id).label('count')
+            )
+            .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+            .join(Class, StudentClass.class_id == Class.class_id)
+        )
+        
+        if class_filter:
+            q = q.filter(Class.class_name == class_filter)
+        if start_date:
+            try:
+                dt = datetime.fromisoformat(start_date)
+                q = q.filter(Attendance.attendance_date >= dt)
+            except Exception:
+                pass
+        if end_date:
+            try:
+                dt2 = datetime.fromisoformat(end_date)
+                q = q.filter(Attendance.attendance_date <= dt2)
+            except Exception:
+                pass
+        
+        q = q.group_by(db.func.strftime('%Y-%m', Attendance.attendance_date)).order_by(db.func.strftime('%Y-%m', Attendance.attendance_date))
+        monthly_data = q.all()
+        
+        labels = []
+        values = []
+        for month, count in monthly_data:
+            labels.append(month)
+            values.append(count)
+        
+        return jsonify({
+            "labels": labels,
+            "values": values
+        })
+    except Exception as e:
+        return jsonify({
+            "labels": [],
+            "values": []
+        }), 500
+
 
 
 if __name__ == "__main__":

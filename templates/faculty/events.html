@@ -20,7 +20,12 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <h2 class="text-xl font-semibold text-primary-900 mb-4">Your Events</h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-primary-900">Your Events</h2>
+                <button onclick="showEventsExportOptions()" class="px-3 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm">
+                    Export Data
+                </button>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {% for ev in events %}
                 <div class="border border-gray-200 rounded-lg p-4">
@@ -37,6 +42,53 @@
             </div>
         </div>
     </div>
+
+    <!-- Export Options Modal -->
+    <div id="eventsExportModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+            <h3 class="text-xl font-bold text-primary-900 mb-4">Export Events Data</h3>
+            <p class="text-primary-600 mb-4">Choose the format for your export:</p>
+            <div class="space-y-3">
+                <button onclick="exportEventsToPDF()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                    Export to PDF
+                </button>
+                <button onclick="exportEventsToExcel()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                    Export to Excel
+                </button>
+                <button onclick="exportEventsToCSV()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                    Export to CSV
+                </button>
+            </div>
+            <button onclick="closeEventsExportModal()" class="w-full mt-4 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function showEventsExportOptions() {
+            document.getElementById('eventsExportModal').classList.remove('hidden');
+        }
+
+        function closeEventsExportModal() {
+            document.getElementById('eventsExportModal').classList.add('hidden');
+        }
+
+        function exportEventsToPDF() {
+            window.location.href = '/classes/events/export/pdf';
+            closeEventsExportModal();
+        }
+
+        function exportEventsToExcel() {
+            window.location.href = '/classes/events/export/excel';
+            closeEventsExportModal();
+        }
+
+        function exportEventsToCSV() {
+            window.location.href = '/classes/events/export/csv';
+            closeEventsExportModal();
+        }
+    </script>
 </body>
 </html>
 
