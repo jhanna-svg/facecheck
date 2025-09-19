@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - FaceCheck Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        },
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 font-sans">
+    <!-- Navigation Header -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 h-10 w-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-primary-900">FaceCheck</h1>
+                        <p class="text-xs text-primary-600">Reports & Analytics</p>
+                    </div>
+                </div>
+                <nav class="flex items-center gap-6">
+                    <a href="/dashboard" class="flex items-center gap-2 text-sm font-medium text-primary-700 hover:text-primary-900 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v3H8V5z"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <div class="h-4 w-px bg-primary-300"></div>
+                    <a href="/logout" class="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Sign Out
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-primary-900 mb-2">Reports & Analytics Module</h2>
+            <p class="text-primary-600">Comprehensive attendance reporting, analytics, and data visualization system</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Overall Attendance Rate</p>
+                        <p id="overallRate" class="text-2xl font-bold text-emerald-600">0%</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Classes</p>
+                        <p id="activeClasses" class="text-2xl font-bold text-blue-600">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Students</p>
+                        <p id="totalStudents" class="text-2xl font-bold text-purple-600">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Reports Generated</p>
+                        <p id="reportsGenerated" class="text-2xl font-bold text-orange-600">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Tabs -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                    <button onclick="switchTab('class-summaries')" id="tab-class-summaries" class="tab-button active py-4 px-1 border-b-2 border-emerald-500 font-medium text-sm text-emerald-600">
+                        Class Attendance Summaries
+                    </button>
+                    <button onclick="switchTab('event-summaries')" id="tab-event-summaries" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Event Attendance Summaries
+                    </button>
+                    <button onclick="switchTab('absence-patterns')" id="tab-absence-patterns" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Absence Patterns Analytics
+                    </button>
+                    <button onclick="switchTab('monthly-graphs')" id="tab-monthly-graphs" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Monthly Attendance Graphs
+                    </button>
+                    <button onclick="switchTab('export-reports')" id="tab-export-reports" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Export Reports
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Class Attendance Summaries Tab -->
+                <div id="class-summaries-tab" class="tab-content">
+                    <div class="space-y-6">
+                        <!-- Filter Controls -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold text-primary-900 mb-4">Class Attendance Summary Generator</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Select Class</label>
+                                    <select id="classSummaryClass" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                        <option value="">All Classes</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                                    <select id="classSummaryRange" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                        <option value="week">Last Week</option>
+                                        <option value="month">Last Month</option>
+                                        <option value="semester">This Semester</option>
+                                        <option value="custom">Custom Range</option>
+                                    </select>
+                                </div>
+                                <div id="customDateRange" class="hidden">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Custom Range</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="date" id="classSummaryStartDate" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                        <input type="date" id="classSummaryEndDate" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
+                                    <button onclick="generateClassSummary()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-lg font-medium">
+                                        Generate Summary
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary Results -->
+                        <div id="classSummaryResults" class="space-y-6">
+                            <!-- Results will be dynamically loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Attendance Summaries Tab -->
+                <div id="event-summaries-tab" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Filter Controls -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold text-primary-900 mb-4">Event Attendance Summary Generator</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
+                                    <select id="eventSummaryType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Events</option>
+                                        <option value="exam">Exams</option>
+                                        <option value="quiz">Quizzes</option>
+                                        <option value="presentation">Presentations</option>
+                                        <option value="seminar">Seminars</option>
+                                        <option value="workshop">Workshops</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                                    <select id="eventSummaryRange" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="week">Last Week</option>
+                                        <option value="month">Last Month</option>
+                                        <option value="semester">This Semester</option>
+                                        <option value="custom">Custom Range</option>
+                                    </select>
+                                </div>
+                                <div id="eventCustomDateRange" class="hidden">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Custom Range</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="date" id="eventSummaryStartDate" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <input type="date" id="eventSummaryEndDate" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
+                                    <button onclick="generateEventSummary()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium">
+                                        Generate Summary
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Event Summary Results -->
+                        <div id="eventSummaryResults" class="space-y-6">
+                            <!-- Results will be dynamically loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Absence Patterns Analytics Tab -->
+                <div id="absence-patterns-tab" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Analytics Controls -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold text-primary-900 mb-4">Absence Patterns Analytics</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Analysis Type</label>
+                                    <select id="analysisType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                        <option value="student">By Student</option>
+                                        <option value="class">By Class</option>
+                                        <option value="department">By Department</option>
+                                        <option value="time">By Time Pattern</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Time Period</label>
+                                    <select id="analysisTimePeriod" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                        <option value="month">Last Month</option>
+                                        <option value="semester">This Semester</option>
+                                        <option value="year">This Year</option>
+                                        <option value="custom">Custom Period</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Threshold (%)</label>
+                                    <input type="number" id="absenceThreshold" value="20" min="0" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
+                                    <button onclick="generateAbsenceAnalysis()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium">
+                                        Analyze Patterns
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Results -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-white rounded-lg p-6 border border-gray-200">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Absence Trends</h4>
+                                <canvas id="absenceTrendsChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="bg-white rounded-lg p-6 border border-gray-200">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Pattern Analysis</h4>
+                                <div id="patternAnalysisResults" class="space-y-4">
+                                    <!-- Dynamic content -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Findings -->
+                        <div class="bg-white rounded-lg p-6 border border-gray-200">
+                            <h4 class="text-lg font-medium text-primary-900 mb-4">Detailed Findings</h4>
+                            <div id="detailedFindings" class="space-y-4">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Attendance Graphs Tab -->
+                <div id="monthly-graphs-tab" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Graph Controls -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold text-primary-900 mb-4">Monthly Attendance Graphs</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Graph Type</label>
+                                    <select id="graphType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="line">Line Chart</option>
+                                        <option value="bar">Bar Chart</option>
+                                        <option value="area">Area Chart</option>
+                                        <option value="combo">Combined Chart</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Data View</label>
+                                    <select id="dataView" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="overall">Overall Attendance</option>
+                                        <option value="by-class">By Class</option>
+                                        <option value="by-department">By Department</option>
+                                        <option value="by-day">By Day of Week</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Time Range</label>
+                                    <select id="graphTimeRange" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="6months">Last 6 Months</option>
+                                        <option value="year">This Year</option>
+                                        <option value="academic">Academic Year</option>
+                                        <option value="custom">Custom Range</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
+                                    <button onclick="generateMonthlyGraphs()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-medium">
+                                        Generate Graphs
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Graph Display -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-white rounded-lg p-6 border border-gray-200">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Primary Graph</h4>
+                                <canvas id="primaryChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="bg-white rounded-lg p-6 border border-gray-200">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Comparison View</h4>
+                                <canvas id="comparisonChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Summary -->
+                        <div class="bg-white rounded-lg p-6 border border-gray-200">
+                            <h4 class="text-lg font-medium text-primary-900 mb-4">Statistical Summary</h4>
+                            <div id="statisticalSummary" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Reports Tab -->
+                <div id="export-reports-tab" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Export Controls -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold text-primary-900 mb-4">Export Reports</h3>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <!-- Export Configuration -->
+                                <div class="space-y-4">
+                                    <h4 class="text-lg font-medium text-primary-900">Export Configuration</h4>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+                                        <select id="exportReportType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                            <option value="attendance-summary">Attendance Summary</option>
+                                            <option value="class-report">Class Report</option>
+                                            <option value="student-report">Student Report</option>
+                                            <option value="absence-analysis">Absence Analysis</option>
+                                            <option value="monthly-trends">Monthly Trends</option>
+                                            <option value="comprehensive">Comprehensive Report</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Export Format</label>
+                                        <select id="exportFormat" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                            <option value="pdf">PDF Report</option>
+                                            <option value="excel">Excel Spreadsheet</option>
+                                            <option value="csv">CSV Data File</option>
+                                            <option value="json">JSON Data</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="date" id="exportStartDate" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                            <input type="date" id="exportEndDate" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Filters</label>
+                                        <div class="space-y-2">
+                                            <select id="exportClassFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                                <option value="">All Classes</option>
+                                            </select>
+                                            <select id="exportDepartmentFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                                <option value="">All Departments</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="generateExport()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-3 px-4 rounded-lg font-medium">
+                                            Generate & Export
+                                        </button>
+                                        <button onclick="previewExport()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 px-4 rounded-lg font-medium">
+                                            Preview
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Export History -->
+                                <div class="space-y-4">
+                                    <h4 class="text-lg font-medium text-primary-900">Export History</h4>
+                                    <div id="exportHistory" class="space-y-3 max-h-96 overflow-y-auto">
+                                        <!-- Dynamic content -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Export Preview -->
+                        <div id="exportPreview" class="bg-white rounded-lg p-6 border border-gray-200 hidden">
+                            <h4 class="text-lg font-medium text-primary-900 mb-4">Export Preview</h4>
+                            <div id="exportPreviewContent" class="space-y-4">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-xl shadow-2xl p-4 transform translate-x-full transition-transform duration-300 max-w-sm">
+        <div class="flex items-start">
+            <div id="toastIcon" class="flex-shrink-0"></div>
+            <div class="ml-3">
+                <p id="toastTitle" class="text-sm font-semibold text-gray-900"></p>
+                <p id="toastMessage" class="text-sm text-gray-600"></p>
+            </div>
+            <button onclick="hideToast()" class="ml-auto flex-shrink-0 text-gray-400 hover:text-gray-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let charts = {};
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active', 'border-emerald-500', 'text-emerald-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            // Add active class to selected tab button
+            const activeButton = document.getElementById('tab-' + tabName);
+            activeButton.classList.add('active', 'border-emerald-500', 'text-emerald-600');
+            activeButton.classList.remove('border-transparent', 'text-gray-500');
+            
+            // Load content based on tab
+            switch(tabName) {
+                case 'class-summaries':
+                    loadClassOptions();
+                    break;
+                case 'event-summaries':
+                    break;
+                case 'absence-patterns':
+                    break;
+                case 'monthly-graphs':
+                    break;
+                case 'export-reports':
+                    loadExportOptions();
+                    loadExportHistory();
+                    break;
+            }
+        }
+
+        // Toast notification system
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+
+            const icons = {
+                success: '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                error: '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                warning: '<svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.982 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>'
+            };
+
+            toastIcon.innerHTML = icons[type] || icons.success;
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+
+            toast.classList.remove('translate-x-full');
+            toast.classList.add('translate-x-0');
+
+            setTimeout(() => hideToast(), 4000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('translate-x-0');
+            toast.classList.add('translate-x-full');
+        }
+
+        // API helper function
+        async function apiCall(url, method = 'GET', data = null) {
+            try {
+                const config = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                if (data) {
+                    config.body = JSON.stringify(data);
+                }
+                const response = await fetch(url, config);
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                return { success: false, message: 'Network error occurred' };
+            }
+        }
+
+        // Load data functions
+        async function loadClassOptions() {
+            try {
+                const result = await apiCall('/api/class-list');
+                if (result.success) {
+                    const classSelect = document.getElementById('classSummaryClass');
+                    classSelect.innerHTML = '<option value="">All Classes</option>';
+                    result.classes.forEach(cls => {
+                        const option = document.createElement('option');
+                        option.value = cls.id;
+                        option.textContent = `${cls.code} - ${cls.name}`;
+                        classSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load classes', 'error');
+            }
+        }
+
+        async function loadExportOptions() {
+            try {
+                // Load classes for export filter
+                const classResult = await apiCall('/api/class-list');
+                if (classResult.success) {
+                    const classSelect = document.getElementById('exportClassFilter');
+                    classSelect.innerHTML = '<option value="">All Classes</option>';
+                    classResult.classes.forEach(cls => {
+                        const option = document.createElement('option');
+                        option.value = cls.id;
+                        option.textContent = `${cls.code} - ${cls.name}`;
+                        classSelect.appendChild(option);
+                    });
+                }
+
+                // Load departments for export filter
+                const deptResult = await apiCall('/api/department-list');
+                if (deptResult.success) {
+                    const deptSelect = document.getElementById('exportDepartmentFilter');
+                    deptSelect.innerHTML = '<option value="">All Departments</option>';
+                    deptResult.departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.id;
+                        option.textContent = dept.name;
+                        deptSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load export options', 'error');
+            }
+        }
+
+        // Report generation functions
+        async function generateClassSummary() {
+            const classId = document.getElementById('classSummaryClass').value;
+            const range = document.getElementById('classSummaryRange').value;
+            const startDate = document.getElementById('classSummaryStartDate').value;
+            const endDate = document.getElementById('classSummaryEndDate').value;
+
+            showToast('Generating', 'Creating class attendance summary...', 'warning');
+
+            try {
+                const result = await apiCall('/api/reports/class-summary', 'POST', {
+                    class_id: classId,
+                    range: range,
+                    start_date: startDate,
+                    end_date: endDate
+                });
+
+                if (result.success) {
+                    displayClassSummary(result.data);
+                    showToast('Success', 'Class summary generated successfully');
+                } else {
+                    showToast('Error', result.message || 'Failed to generate summary', 'error');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to generate class summary', 'error');
+            }
+        }
+
+        async function generateEventSummary() {
+            const eventType = document.getElementById('eventSummaryType').value;
+            const range = document.getElementById('eventSummaryRange').value;
+            const startDate = document.getElementById('eventSummaryStartDate').value;
+            const endDate = document.getElementById('eventSummaryEndDate').value;
+
+            showToast('Generating', 'Creating event attendance summary...', 'warning');
+
+            try {
+                const result = await apiCall('/api/reports/event-summary', 'POST', {
+                    event_type: eventType,
+                    range: range,
+                    start_date: startDate,
+                    end_date: endDate
+                });
+
+                if (result.success) {
+                    displayEventSummary(result.data);
+                    showToast('Success', 'Event summary generated successfully');
+                } else {
+                    showToast('Error', result.message || 'Failed to generate summary', 'error');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to generate event summary', 'error');
+            }
+        }
+
+        async function generateAbsenceAnalysis() {
+            const analysisType = document.getElementById('analysisType').value;
+            const timePeriod = document.getElementById('analysisTimePeriod').value;
+            const threshold = document.getElementById('absenceThreshold').value;
+
+            showToast('Analyzing', 'Analyzing absence patterns...', 'warning');
+
+            try {
+                const result = await apiCall('/api/reports/absence-analysis', 'POST', {
+                    analysis_type: analysisType,
+                    time_period: timePeriod,
+                    threshold: threshold
+                });
+
+                if (result.success) {
+                    displayAbsenceAnalysis(result.data);
+                    showToast('Success', 'Absence analysis completed');
+                } else {
+                    showToast('Error', result.message || 'Failed to analyze patterns', 'error');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to analyze absence patterns', 'error');
+            }
+        }
+
+        async function generateMonthlyGraphs() {
+            const graphType = document.getElementById('graphType').value;
+            const dataView = document.getElementById('dataView').value;
+            const timeRange = document.getElementById('graphTimeRange').value;
+
+            showToast('Generating', 'Creating monthly attendance graphs...', 'warning');
+
+            try {
+                const result = await apiCall('/api/reports/monthly-graphs', 'POST', {
+                    graph_type: graphType,
+                    data_view: dataView,
+                    time_range: timeRange
+                });
+
+                if (result.success) {
+                    displayMonthlyGraphs(result.data);
+                    showToast('Success', 'Monthly graphs generated successfully');
+                } else {
+                    showToast('Error', result.message || 'Failed to generate graphs', 'error');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to generate monthly graphs', 'error');
+            }
+        }
+
+        async function generateExport() {
+            const reportType = document.getElementById('exportReportType').value;
+            const format = document.getElementById('exportFormat').value;
+            const startDate = document.getElementById('exportStartDate').value;
+            const endDate = document.getElementById('exportEndDate').value;
+            const classFilter = document.getElementById('exportClassFilter').value;
+            const deptFilter = document.getElementById('exportDepartmentFilter').value;
+
+            showToast('Exporting', 'Generating and preparing export...', 'warning');
+
+            try {
+                const result = await apiCall('/api/reports/export', 'POST', {
+                    report_type: reportType,
+                    format: format,
+                    start_date: startDate,
+                    end_date: endDate,
+                    class_filter: classFilter,
+                    department_filter: deptFilter
+                });
+
+                if (result.success) {
+                    showToast('Success', `Report exported successfully as ${format.toUpperCase()}`);
+                    loadExportHistory();
+                } else {
+                    showToast('Error', result.message || 'Failed to export report', 'error');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to export report', 'error');
+            }
+        }
+
+        // Display functions
+        function displayClassSummary(data) {
+            const resultsContainer = document.getElementById('classSummaryResults');
+            resultsContainer.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-lg p-6 border border-gray-200">
+                        <h4 class="text-lg font-medium text-primary-900 mb-4">Attendance Overview</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Classes:</span>
+                                <span class="font-medium">${data.total_classes || 0}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Average Attendance:</span>
+                                <span class="font-medium text-green-600">${data.average_attendance || 0}%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Students:</span>
+                                <span class="font-medium">${data.total_students || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-lg p-6 border border-gray-200">
+                            <h4 class="text-lg font-medium text-primary-900 mb-4">Class Performance</h4>
+                            <div class="space-y-3">
+                                ${(data.class_performance || []).map(cls => `
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <span class="font-medium">${cls.name}</span>
+                                            <span class="text-sm text-gray-600 ml-2">(${cls.code})</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="font-medium ${cls.rate >= 80 ? 'text-green-600' : cls.rate >= 60 ? 'text-yellow-600' : 'text-red-600'}">${cls.rate}%</span>
+                                            <div class="text-xs text-gray-500">${cls.present}/${cls.total}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayEventSummary(data) {
+            const resultsContainer = document.getElementById('eventSummaryResults');
+            resultsContainer.innerHTML = `
+                <div class="bg-white rounded-lg p-6 border border-gray-200">
+                    <h4 class="text-lg font-medium text-primary-900 mb-4">Event Attendance Summary</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Event</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Attendance</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${(data.events || []).map(event => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap font-medium">${event.name}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">${event.type}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">${event.date}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">${event.present}/${event.total}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${event.rate >= 80 ? 'bg-green-100 text-green-800' : event.rate >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+                                                ${event.rate}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayAbsenceAnalysis(data) {
+            // Create absence trends chart
+            const ctx = document.getElementById('absenceTrendsChart').getContext('2d');
+            if (charts.absenceTrends) {
+                charts.absenceTrends.destroy();
+            }
+            
+            charts.absenceTrends = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.chart_labels || [],
+                    datasets: [{
+                        label: 'Absence Rate (%)',
+                        data: data.chart_data || [],
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Update pattern analysis
+            const patternContainer = document.getElementById('patternAnalysisResults');
+            patternContainer.innerHTML = (data.patterns || []).map(pattern => `
+                <div class="p-3 bg-red-50 rounded-lg">
+                    <h5 class="font-medium text-red-900">${pattern.title}</h5>
+                    <p class="text-sm text-red-700">${pattern.description}</p>
+                    <span class="text-xs text-red-600">${pattern.impact}</span>
+                </div>
+            `).join('');
+
+            // Update detailed findings
+            const findingsContainer = document.getElementById('detailedFindings');
+            findingsContainer.innerHTML = (data.findings || []).map(finding => `
+                <div class="border-l-4 border-red-400 pl-4">
+                    <h5 class="font-medium text-gray-900">${finding.category}</h5>
+                    <p class="text-gray-700">${finding.description}</p>
+                    <ul class="text-sm text-gray-600 mt-2">
+                        ${(finding.details || []).map(detail => `<li>• ${detail}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+
+        function displayMonthlyGraphs(data) {
+            // Primary chart
+            const primaryCtx = document.getElementById('primaryChart').getContext('2d');
+            if (charts.primary) {
+                charts.primary.destroy();
+            }
+            
+            charts.primary = new Chart(primaryCtx, {
+                type: data.primary_chart.type || 'line',
+                data: data.primary_chart.data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Comparison chart
+            const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+            if (charts.comparison) {
+                charts.comparison.destroy();
+            }
+            
+            charts.comparison = new Chart(comparisonCtx, {
+                type: data.comparison_chart.type || 'bar',
+                data: data.comparison_chart.data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Statistical summary
+            const summaryContainer = document.getElementById('statisticalSummary');
+            summaryContainer.innerHTML = (data.statistics || []).map(stat => `
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-indigo-600">${stat.value}</div>
+                    <div class="text-sm text-gray-600">${stat.label}</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadExportHistory() {
+            try {
+                const result = await apiCall('/api/reports/export-history');
+                if (result.success) {
+                    const historyContainer = document.getElementById('exportHistory');
+                    historyContainer.innerHTML = (result.history || []).map(item => `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <div class="font-medium">${item.name}</div>
+                                <div class="text-xs text-gray-600">${item.date} • ${item.format}</div>
+                            </div>
+                            <button onclick="downloadExport('${item.id}')" class="text-teal-600 hover:text-teal-800 text-sm">
+                                Download
+                            </button>
+                        </div>
+                    `).join('') || '<p class="text-gray-500">No export history found</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load export history:', error);
+            }
+        }
+
+        async function previewExport() {
+            showToast('Preview', 'Generating export preview...', 'warning');
+            const previewDiv = document.getElementById('exportPreview');
+            previewDiv.classList.remove('hidden');
+            
+            // Mock preview content
+            document.getElementById('exportPreviewContent').innerHTML = `
+                <div class="space-y-4">
+                    <div class="text-sm text-gray-600">Preview of selected report configuration:</div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p><strong>Report Type:</strong> ${document.getElementById('exportReportType').value}</p>
+                        <p><strong>Format:</strong> ${document.getElementById('exportFormat').value}</p>
+                        <p><strong>Date Range:</strong> ${document.getElementById('exportStartDate').value} to ${document.getElementById('exportEndDate').value}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function updateStats() {
+            try {
+                const result = await apiCall('/api/reports/stats');
+                if (result.success) {
+                    document.getElementById('overallRate').textContent = result.stats.overall_rate + '%';
+                    document.getElementById('activeClasses').textContent = result.stats.active_classes;
+                    document.getElementById('totalStudents').textContent = result.stats.total_students;
+                    document.getElementById('reportsGenerated').textContent = result.stats.reports_generated;
+                }
+            } catch (error) {
+                console.error('Failed to update stats:', error);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('classSummaryRange').addEventListener('change', function() {
+            const customRange = document.getElementById('customDateRange');
+            if (this.value === 'custom') {
+                customRange.classList.remove('hidden');
+            } else {
+                customRange.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('eventSummaryRange').addEventListener('change', function() {
+            const customRange = document.getElementById('eventCustomDateRange');
+            if (this.value === 'custom') {
+                customRange.classList.remove('hidden');
+            } else {
+                customRange.classList.add('hidden');
+            }
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            const lastMonth = new Date();
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            const lastMonthStr = lastMonth.toISOString().split('T')[0];
+            
+            document.getElementById('classSummaryStartDate').value = lastMonthStr;
+            document.getElementById('classSummaryEndDate').value = today;
+            document.getElementById('eventSummaryStartDate').value = lastMonthStr;
+            document.getElementById('eventSummaryEndDate').value = today;
+            document.getElementById('exportStartDate').value = lastMonthStr;
+            document.getElementById('exportEndDate').value = today;
+            
+            // Load initial data
+            loadClassOptions();
+            updateStats();
+            showToast('Module Loaded', 'Reports & Analytics Module is ready');
+        });
+    </script>
+</body>
+</html>

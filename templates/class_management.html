@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class & Event Management - FaceCheck Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        },
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 font-sans">
+    <!-- Navigation Header -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 h-10 w-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-primary-900">FaceCheck</h1>
+                        <p class="text-xs text-primary-600">Class & Event Management</p>
+                    </div>
+                </div>
+                <nav class="flex items-center gap-6">
+                    <a href="/dashboard" class="flex items-center gap-2 text-sm font-medium text-primary-700 hover:text-primary-900 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v3H8V5z"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <div class="h-4 w-px bg-primary-300"></div>
+                    <a href="/logout" class="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Sign Out
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-primary-900 mb-2">Class & Event Management Module</h2>
+            <p class="text-primary-600">Comprehensive class scheduling, faculty assignment, and student enrollment system</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Classes</p>
+                        <p id="totalClasses" class="text-2xl font-bold text-primary-900">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0v1a2 2 0 002 2h4a2 2 0 002-2V7m-6 0h8M5 21h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Events</p>
+                        <p id="activeEvents" class="text-2xl font-bold text-blue-600">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Enrolled Students</p>
+                        <p id="enrolledStudents" class="text-2xl font-bold text-green-600">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m0 0v10a2 2 0 01-2 2H10a2 2 0 01-2-2V6"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Assigned Faculty</p>
+                        <p id="assignedFaculty" class="text-2xl font-bold text-orange-600">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Tabs -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                    <button onclick="switchTab('schedule')" id="tab-schedule" class="tab-button active py-4 px-1 border-b-2 border-purple-500 font-medium text-sm text-purple-600">
+                        Create Class & Event Schedule
+                    </button>
+                    <button onclick="switchTab('assign')" id="tab-assign" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Assign Faculty
+                    </button>
+                    <button onclick="switchTab('enroll')" id="tab-enroll" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Enroll Students
+                    </button>
+                    <button onclick="switchTab('view')" id="tab-view" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        View Lists
+                    </button>
+                    <button onclick="switchTab('update')" id="tab-update" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Update Info
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Create Class & Event Schedule Tab -->
+                <div id="schedule-tab" class="tab-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Create Class Form -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold text-primary-900 mb-6">Create New Class</h3>
+                            <form id="createClassForm" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Class Name *</label>
+                                    <input type="text" id="className" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Class Code *</label>
+                                    <input type="text" id="classCode" required placeholder="e.g., CS101, MATH202" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Course *</label>
+                                    <select id="classCourse" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                        <option value="">Select Course</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Time *</label>
+                                        <input type="time" id="classStartTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">End Time *</label>
+                                        <input type="time" id="classEndTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Days of Week *</label>
+                                    <div class="grid grid-cols-7 gap-2 mt-2">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" value="Monday" class="class-days rounded text-purple-600 focus:ring-purple-500">
+                                            <span class="ml-1 text-xs">Mon</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" value="Tuesday" class="class-days rounded text-purple-600 focus:ring-purple-500">
+                                            <span class="ml-1 text-xs">Tue</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" value="Wednesday" class="class-days rounded text-purple-600 focus:ring-purple-500">
+                                            <span class="ml-1 text-xs">Wed</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" value="Thursday" class="class-days rounded text-purple-600 focus:ring-purple-500">
+                                            <span class="ml-1 text-xs">Thu</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" value="Friday" class="class-days rounded text-purple-600 focus:ring-purple-500">
+                                            <span class="ml-1 text-xs">Fri</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" value="Saturday" class="class-days rounded text-purple-600 focus:ring-purple-500">
+                                            <span class="ml-1 text-xs">Sat</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" value="Sunday" class="class-days rounded text-purple-600 focus:ring-purple-500">
+                                            <span class="ml-1 text-xs">Sun</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Room/Location</label>
+                                    <input type="text" id="classRoom" placeholder="e.g., Room 201, Lab 1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                </div>
+                                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium">
+                                    Create Class
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Create Event Form -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold text-primary-900 mb-6">Create New Event</h3>
+                            <form id="createEventForm" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Event Name *</label>
+                                    <input type="text" id="eventName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Event Type *</label>
+                                    <select id="eventType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Select Type</option>
+                                        <option value="exam">Exam</option>
+                                        <option value="quiz">Quiz</option>
+                                        <option value="presentation">Presentation</option>
+                                        <option value="seminar">Seminar</option>
+                                        <option value="workshop">Workshop</option>
+                                        <option value="meeting">Meeting</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                                        <input type="date" id="eventDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                                        <input type="number" id="eventDuration" placeholder="60" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Time *</label>
+                                        <input type="time" id="eventStartTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">End Time *</label>
+                                        <input type="time" id="eventEndTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                                    <input type="text" id="eventLocation" placeholder="e.g., Auditorium, Conference Room" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea id="eventDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium">
+                                    Create Event
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assign Faculty Tab -->
+                <div id="assign-tab" class="tab-content hidden">
+                    <div class="max-w-4xl mx-auto">
+                        <h3 class="text-xl font-semibold text-primary-900 mb-6">Assign Faculty to Classes & Events</h3>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Assignment Form -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">New Assignment</h4>
+                                <form id="assignFacultyForm" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Faculty *</label>
+                                        <select id="assignFaculty" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                            <option value="">Select Faculty Member</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Assignment Type *</label>
+                                        <select id="assignmentType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" onchange="toggleAssignmentOptions()">
+                                            <option value="">Select Type</option>
+                                            <option value="class">Class</option>
+                                            <option value="event">Event</option>
+                                        </select>
+                                    </div>
+                                    <div id="classSelection" class="hidden">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Class *</label>
+                                        <select id="assignClass" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                            <option value="">Select Class</option>
+                                        </select>
+                                    </div>
+                                    <div id="eventSelection" class="hidden">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Event *</label>
+                                        <select id="assignEvent" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                            <option value="">Select Event</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                        <select id="facultyRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                            <option value="instructor">Instructor</option>
+                                            <option value="assistant">Assistant</option>
+                                            <option value="coordinator">Coordinator</option>
+                                            <option value="supervisor">Supervisor</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium">
+                                        Assign Faculty
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Current Assignments -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Current Assignments</h4>
+                                <div id="currentAssignments" class="space-y-3 max-h-96 overflow-y-auto">
+                                    <!-- Dynamic content -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enroll Students Tab -->
+                <div id="enroll-tab" class="tab-content hidden">
+                    <div class="max-w-6xl mx-auto">
+                        <h3 class="text-xl font-semibold text-primary-900 mb-6">Enroll Students to Classes</h3>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Enrollment Form -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Enroll Student</h4>
+                                <form id="enrollStudentForm" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Student *</label>
+                                        <select id="enrollStudent" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                            <option value="">Select Student</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Class *</label>
+                                        <select id="enrollClass" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                            <option value="">Select Class</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Enrollment Date</label>
+                                        <input type="date" id="enrollmentDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-lg font-medium">
+                                        Enroll Student
+                                    </button>
+                                </form>
+
+                                <!-- Bulk Enrollment -->
+                                <div class="mt-8 pt-6 border-t border-gray-200">
+                                    <h5 class="text-md font-medium text-primary-900 mb-4">Bulk Enrollment</h5>
+                                    <form id="bulkEnrollForm" class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Select Class *</label>
+                                            <select id="bulkEnrollClass" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                                <option value="">Select Class</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Enrollment Criteria</label>
+                                            <select id="enrollmentCriteria" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                                <option value="department">By Department</option>
+                                                <option value="course">By Course</option>
+                                                <option value="year">By Year Level</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium">
+                                            Bulk Enroll
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Search & Filter -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Search Students</h4>
+                                <div class="space-y-4">
+                                    <input type="text" id="studentSearch" placeholder="Search by name or ID" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <select id="departmentFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="">All Departments</option>
+                                    </select>
+                                    <button onclick="searchStudents()" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium">
+                                        Search
+                                    </button>
+                                </div>
+                                <div id="studentResults" class="mt-4 space-y-2 max-h-64 overflow-y-auto">
+                                    <!-- Dynamic content -->
+                                </div>
+                            </div>
+
+                            <!-- Current Enrollments -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Current Enrollments</h4>
+                                <div class="space-y-2">
+                                    <select id="enrollmentClassFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" onchange="filterEnrollments()">
+                                        <option value="">All Classes</option>
+                                    </select>
+                                </div>
+                                <div id="currentEnrollments" class="mt-4 space-y-2 max-h-96 overflow-y-auto">
+                                    <!-- Dynamic content -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Lists Tab -->
+                <div id="view-tab" class="tab-content hidden">
+                    <div class="space-y-8">
+                        <!-- Filter Controls -->
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xl font-semibold text-primary-900">Class & Event Lists</h3>
+                            <div class="flex gap-4">
+                                <select id="viewFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" onchange="applyViewFilter()">
+                                    <option value="all">All Items</option>
+                                    <option value="classes">Classes Only</option>
+                                    <option value="events">Events Only</option>
+                                </select>
+                                <input type="text" id="searchFilter" placeholder="Search by name or code" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" onkeyup="applyViewFilter()">
+                            </div>
+                        </div>
+
+                        <!-- Classes List -->
+                        <div id="classesList">
+                            <h4 class="text-lg font-medium text-primary-900 mb-4">Classes</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Code</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrolled</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="classesTableBody" class="bg-white divide-y divide-gray-200">
+                                        <!-- Dynamic content -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Events List -->
+                        <div id="eventsList" class="mt-8">
+                            <h4 class="text-lg font-medium text-primary-900 mb-4">Events</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organizer</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="eventsTableBody" class="bg-white divide-y divide-gray-200">
+                                        <!-- Dynamic content -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Info Tab -->
+                <div id="update-tab" class="tab-content hidden">
+                    <div class="max-w-4xl mx-auto">
+                        <h3 class="text-xl font-semibold text-primary-900 mb-6">Update Class & Event Information</h3>
+                        <div class="space-y-6">
+                            <!-- Selection Area -->
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Select Item to Update</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Update Type</label>
+                                        <select id="updateType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" onchange="loadUpdateOptions()">
+                                            <option value="">Select Type</option>
+                                            <option value="class">Class</option>
+                                            <option value="event">Event</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Item</label>
+                                        <select id="updateItem" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" onchange="loadItemDetails()">
+                                            <option value="">Select Item</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <button onclick="loadItemDetails()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-medium mt-6">
+                                            Load Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Update Form -->
+                            <div id="updateForm" class="bg-gray-50 rounded-lg p-6 hidden">
+                                <h4 class="text-lg font-medium text-primary-900 mb-4">Update Information</h4>
+                                <form id="updateDetailsForm" class="space-y-4">
+                                    <input type="hidden" id="updateItemId">
+                                    <div id="updateFields">
+                                        <!-- Dynamic form fields will be inserted here -->
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <button type="submit" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg font-medium">
+                                            Update Information
+                                        </button>
+                                        <button type="button" onclick="cancelUpdate()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 px-4 rounded-lg font-medium">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-xl shadow-2xl p-4 transform translate-x-full transition-transform duration-300 max-w-sm">
+        <div class="flex items-start">
+            <div id="toastIcon" class="flex-shrink-0"></div>
+            <div class="ml-3">
+                <p id="toastTitle" class="text-sm font-semibold text-gray-900"></p>
+                <p id="toastMessage" class="text-sm text-gray-600"></p>
+            </div>
+            <button onclick="hideToast()" class="ml-auto flex-shrink-0 text-gray-400 hover:text-gray-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active', 'border-purple-500', 'text-purple-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            // Add active class to selected tab button
+            const activeButton = document.getElementById('tab-' + tabName);
+            activeButton.classList.add('active', 'border-purple-500', 'text-purple-600');
+            activeButton.classList.remove('border-transparent', 'text-gray-500');
+            
+            // Load content based on tab
+            switch(tabName) {
+                case 'schedule':
+                    loadCourses();
+                    break;
+                case 'assign':
+                    loadFaculty();
+                    loadClasses();
+                    loadEvents();
+                    loadCurrentAssignments();
+                    break;
+                case 'enroll':
+                    loadStudents();
+                    loadClassesForEnrollment();
+                    loadDepartments();
+                    loadCurrentEnrollments();
+                    break;
+                case 'view':
+                    loadClassesAndEvents();
+                    break;
+                case 'update':
+                    break;
+            }
+        }
+
+        // Toast notification system
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+
+            const icons = {
+                success: '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                error: '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                warning: '<svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.982 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>'
+            };
+
+            toastIcon.innerHTML = icons[type] || icons.success;
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+
+            toast.classList.remove('translate-x-full');
+            toast.classList.add('translate-x-0');
+
+            setTimeout(() => hideToast(), 4000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('translate-x-0');
+            toast.classList.add('translate-x-full');
+        }
+
+        // API helper function
+        async function apiCall(url, method = 'GET', data = null) {
+            try {
+                const config = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                if (data) {
+                    config.body = JSON.stringify(data);
+                }
+                const response = await fetch(url, config);
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                return { success: false, message: 'Network error occurred' };
+            }
+        }
+
+        // Load data functions
+        async function loadCourses() {
+            try {
+                const result = await apiCall('/api/all-courses');
+                if (result.success) {
+                    const courseSelect = document.getElementById('classCourse');
+                    courseSelect.innerHTML = '<option value="">Select Course</option>';
+                    result.courses.forEach(course => {
+                        const option = document.createElement('option');
+                        option.value = course.id;
+                        option.textContent = course.name;
+                        courseSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load courses', 'error');
+            }
+        }
+
+        async function loadFaculty() {
+            try {
+                const result = await apiCall('/api/faculty-list');
+                if (result.success) {
+                    const facultySelect = document.getElementById('assignFaculty');
+                    facultySelect.innerHTML = '<option value="">Select Faculty Member</option>';
+                    result.faculty.forEach(faculty => {
+                        const option = document.createElement('option');
+                        option.value = faculty.id;
+                        option.textContent = `${faculty.name} (${faculty.id_number})`;
+                        facultySelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load faculty', 'error');
+            }
+        }
+
+        async function loadClasses() {
+            try {
+                const result = await apiCall('/api/class-list');
+                if (result.success) {
+                    const classSelects = ['assignClass', 'enrollClass', 'bulkEnrollClass', 'enrollmentClassFilter'];
+                    classSelects.forEach(selectId => {
+                        const select = document.getElementById(selectId);
+                        if (select) {
+                            select.innerHTML = '<option value="">Select Class</option>';
+                            result.classes.forEach(cls => {
+                                const option = document.createElement('option');
+                                option.value = cls.id;
+                                option.textContent = `${cls.code} - ${cls.name}`;
+                                select.appendChild(option);
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load classes', 'error');
+            }
+        }
+
+        async function loadEvents() {
+            try {
+                const result = await apiCall('/api/event-list');
+                if (result.success) {
+                    const eventSelect = document.getElementById('assignEvent');
+                    eventSelect.innerHTML = '<option value="">Select Event</option>';
+                    result.events.forEach(event => {
+                        const option = document.createElement('option');
+                        option.value = event.id;
+                        option.textContent = `${event.name} (${event.date})`;
+                        eventSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load events', 'error');
+            }
+        }
+
+        async function loadStudents() {
+            try {
+                const result = await apiCall('/api/student-list');
+                if (result.success) {
+                    const studentSelect = document.getElementById('enrollStudent');
+                    studentSelect.innerHTML = '<option value="">Select Student</option>';
+                    result.students.forEach(student => {
+                        const option = document.createElement('option');
+                        option.value = student.id;
+                        option.textContent = `${student.name} (${student.id_number})`;
+                        studentSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load students', 'error');
+            }
+        }
+
+        async function loadDepartments() {
+            try {
+                const result = await apiCall('/api/department-list');
+                if (result.success) {
+                    const deptSelect = document.getElementById('departmentFilter');
+                    deptSelect.innerHTML = '<option value="">All Departments</option>';
+                    result.departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.id;
+                        option.textContent = dept.name;
+                        deptSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load departments', 'error');
+            }
+        }
+
+        // Form submission handlers
+        document.getElementById('createClassForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('className').value,
+                code: document.getElementById('classCode').value,
+                course_id: document.getElementById('classCourse').value,
+                start_time: document.getElementById('classStartTime').value,
+                end_time: document.getElementById('classEndTime').value,
+                days: Array.from(document.querySelectorAll('.class-days:checked')).map(cb => cb.value),
+                room: document.getElementById('classRoom').value
+            };
+
+            const result = await apiCall('/api/create-class', 'POST', formData);
+            if (result.success) {
+                showToast('Success', 'Class created successfully');
+                this.reset();
+                updateStats();
+            } else {
+                showToast('Error', result.message || 'Failed to create class', 'error');
+            }
+        });
+
+        document.getElementById('createEventForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('eventName').value,
+                type: document.getElementById('eventType').value,
+                date: document.getElementById('eventDate').value,
+                start_time: document.getElementById('eventStartTime').value,
+                end_time: document.getElementById('eventEndTime').value,
+                duration: document.getElementById('eventDuration').value,
+                location: document.getElementById('eventLocation').value,
+                description: document.getElementById('eventDescription').value
+            };
+
+            const result = await apiCall('/api/create-event', 'POST', formData);
+            if (result.success) {
+                showToast('Success', 'Event created successfully');
+                this.reset();
+                updateStats();
+            } else {
+                showToast('Error', result.message || 'Failed to create event', 'error');
+            }
+        });
+
+        // Additional helper functions
+        function toggleAssignmentOptions() {
+            const type = document.getElementById('assignmentType').value;
+            const classSelection = document.getElementById('classSelection');
+            const eventSelection = document.getElementById('eventSelection');
+            
+            if (type === 'class') {
+                classSelection.classList.remove('hidden');
+                eventSelection.classList.add('hidden');
+            } else if (type === 'event') {
+                eventSelection.classList.remove('hidden');
+                classSelection.classList.add('hidden');
+            } else {
+                classSelection.classList.add('hidden');
+                eventSelection.classList.add('hidden');
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const result = await apiCall('/api/class-management-stats');
+                if (result.success) {
+                    document.getElementById('totalClasses').textContent = result.stats.total_classes;
+                    document.getElementById('activeEvents').textContent = result.stats.active_events;
+                    document.getElementById('enrolledStudents').textContent = result.stats.enrolled_students;
+                    document.getElementById('assignedFaculty').textContent = result.stats.assigned_faculty;
+                }
+            } catch (error) {
+                console.error('Failed to update stats:', error);
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('eventDate').value = today;
+            document.getElementById('enrollmentDate').value = today;
+            
+            // Load initial data
+            loadCourses();
+            updateStats();
+            showToast('Module Loaded', 'Class & Event Management Module is ready');
+        });
+    </script>
+</body>
+</html>

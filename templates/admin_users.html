@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - FaceCheck Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        },
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .shadow-xl-custom {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 font-sans antialiased">
+    <!-- Header Navigation -->
+    <header class="glass-effect border-b border-white/20 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 h-10 w-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-primary-900">FaceCheck</h1>
+                        <p class="text-xs text-primary-600">User Management</p>
+                    </div>
+                </div>
+                <nav class="flex items-center gap-6">
+                    <a href="/dashboard" class="flex items-center gap-2 text-sm font-medium text-primary-700 hover:text-primary-900 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v3H8V5z"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <div class="h-4 w-px bg-primary-300"></div>
+                    <a href="/logout" class="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Sign Out
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+            <h2 class="text-3xl font-bold text-primary-900 mb-2">User Management</h2>
+                <p class="text-primary-600 text-lg">Create, edit, assign roles, reset passwords, and manage user accounts</p>
+            </div>
+            <button id="btnCreateUser" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Create User
+            </button>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Users</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ users|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Students</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ users|selectattr('role', 'equalto', 'student')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m0 0v10a2 2 0 01-2 2H10a2 2 0 01-2-2V6"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Faculty</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ users|selectattr('role', 'equalto', 'faculty')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Admins</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ users|selectattr('role', 'equalto', 'admin')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-primary-900">All Users</h3>
+            </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">User ID</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Full Name</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Department</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in users %}
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-mono text-primary-900 bg-gray-100 px-2 py-1 rounded">{{ user.idno }}</div>
+                            </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                    <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                                        {{ user.firstname[0] }}{{ user.lastname[0] }}
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-semibold text-primary-900">{{ user.full_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ user.firstname }} {{ user.lastname }}</div>
+                                    </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                {% if user.role == 'admin' %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM15.657 6.343a1 1 0 011.414 0A9.972 9.972 0 0119 12a9.972 9.972 0 01-1.929 5.657 1 1 0 11-1.414-1.414A7.971 7.971 0 0017 12c0-1.933-.685-3.711-1.829-5.1a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Administrator
+                                </span>
+                                {% elif user.role == 'faculty' %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.75 2.524z"></path>
+                                    </svg>
+                                    Faculty
+                                            </span>
+                                        {% else %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Student
+                                            </span>
+                                        {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ user.dept_name or 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ user.created_at or 'N/A' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                {% if user.is_active %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
+                                    Active
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                    <div class="w-2 h-2 bg-red-400 rounded-full mr-1"></div>
+                                    Inactive
+                                    </span>
+                                {% endif %}
+                                </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="editUser({{ user.user_id }})" title="Edit User" class="inline-flex items-center p-2 rounded-lg text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="resetPassword({{ user.user_id }}, '{{ user.full_name }}')" title="Reset Password" class="inline-flex items-center p-2 rounded-lg text-orange-700 bg-orange-100 hover:bg-orange-200 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="toggleStatus({{ user.user_id }})" title="{{ 'Deactivate User' if user.is_active else 'Activate User' }}" class="inline-flex items-center p-2 rounded-lg {{ 'text-red-700 bg-red-100 hover:bg-red-200' if user.is_active else 'text-green-700 bg-green-100 hover:bg-green-200' }} transition-colors">
+                                        {% if user.is_active %}
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364L18.364 5.636"></path>
+                                        </svg>
+                                        {% else %}
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        {% endif %}
+                                    </button>
+                                </div>
+                            </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    </main>
+
+    <!-- Create User Modal -->
+    <div id="createModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="bg-primary-600 px-6 py-4">
+                <h3 class="text-xl font-bold text-white">Create New User</h3>
+            </div>
+            <form id="createForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                        <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                        <input type="text" id="createFirstname" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                        <input type="text" id="createLastname" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        </div>
+                        <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">User ID *</label>
+                    <input type="text" id="createIdno" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                    <input type="password" id="createPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                    <select id="createRole" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select Role</option>
+                        <option value="student">Student</option>
+                        <option value="faculty">Faculty</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                        </div>
+                        <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                    <select id="createDepartment" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select Department</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                            </select>
+                        </div>
+                <div id="studentFields" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                        <select id="createCourse" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select Course</option>
+                            </select>
+                        </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                        <select id="createYearLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+                <div id="facultyFields" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                    <input type="text" id="createPosition" placeholder="e.g., Professor, Instructor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex gap-3 pt-4 border-t">
+                    <button type="submit" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200">
+                        Create User
+                    </button>
+                    <button type="button" onclick="closeModal('createModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="bg-primary-600 px-6 py-4">
+                <h3 class="text-xl font-bold text-white">Edit User</h3>
+            </div>
+            <form id="editForm" class="p-6 space-y-4">
+                <input type="hidden" id="editUserId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                        <input type="text" id="editFirstname" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                        <input type="text" id="editLastname" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                </div>
+                        <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                    <input type="text" id="editIdno" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                        </div>
+                        <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                    <select id="editRole" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="student">Student</option>
+                                <option value="faculty">Faculty</option>
+                        <option value="admin">Administrator</option>
+                            </select>
+                        </div>
+                        <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                    <select id="editDepartment" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="">Select Department</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                            </select>
+                        </div>
+                <div id="editStudentFields" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                        <select id="editCourse" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="">Select Course</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.name }}</option>
+                            {% endfor %}
+                            </select>
+                        </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                        <select id="editYearLevel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+                <div id="editFacultyFields" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                    <input type="text" id="editPosition" placeholder="e.g., Professor, Instructor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div class="flex gap-3 pt-4 border-t">
+                    <button type="submit" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200">
+                        Update User
+                    </button>
+                    <button type="button" onclick="closeModal('editModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="bg-orange-600 px-6 py-4">
+                <h3 class="text-xl font-bold text-white">Reset Password</h3>
+            </div>
+            <form id="resetForm" class="p-6 space-y-4">
+                <input type="hidden" id="resetUserId">
+                <p class="text-gray-700">Reset password for: <span id="resetUserName" class="font-semibold"></span></p>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">New Password *</label>
+                    <input type="password" id="resetPassword" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <p class="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+                </div>
+                <div class="flex gap-3 pt-4 border-t">
+                    <button type="submit" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200">
+                        Reset Password
+                    </button>
+                    <button type="button" onclick="closeModal('resetModal')" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+                    </div>
+                    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-xl shadow-2xl p-4 transform translate-x-full transition-transform duration-300 max-w-sm">
+        <div class="flex items-start">
+            <div id="toastIcon" class="flex-shrink-0"></div>
+            <div class="ml-3">
+                <p id="toastTitle" class="text-sm font-semibold text-gray-900"></p>
+                <p id="toastMessage" class="text-sm text-gray-600"></p>
+            </div>
+            <button onclick="hideToast()" class="ml-auto flex-shrink-0 text-gray-400 hover:text-gray-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global functions
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function showToast(title, message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+
+            // Set icon based on type
+            const icons = {
+                success: '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                error: '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                warning: '<svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.982 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>'
+            };
+
+            toastIcon.innerHTML = icons[type] || icons.success;
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+
+            // Show toast
+            toast.classList.remove('translate-x-full');
+            toast.classList.add('translate-x-0');
+
+            // Auto hide after 4 seconds
+            setTimeout(() => {
+                hideToast();
+            }, 4000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('translate-x-0');
+            toast.classList.add('translate-x-full');
+        }
+
+        // API helper
+        async function apiCall(url, method = 'GET', data = null) {
+            try {
+                const config = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                if (data) {
+                    config.body = JSON.stringify(data);
+                }
+                const response = await fetch(url, config);
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                return { success: false, message: 'Network error occurred' };
+            }
+        }
+
+        // Load courses by department
+        async function loadCoursesByDepartment(deptId, courseSelectId) {
+            const courseSelect = document.getElementById(courseSelectId);
+            
+            // Clear existing options except the first one
+            courseSelect.innerHTML = '<option value="">Select Course</option>';
+            
+            if (!deptId) {
+                return Promise.resolve();
+            }
+
+            try {
+                const response = await fetch(`/api/courses/${deptId}`);
+                const data = await response.json();
+                
+                if (data.success && data.courses) {
+                    data.courses.forEach(course => {
+                        const option = document.createElement('option');
+                        option.value = course.id;
+                        option.textContent = course.name;
+                        courseSelect.appendChild(option);
+                    });
+                    return Promise.resolve();
+                } else {
+                    showToast('Error', 'Failed to load courses for selected department', 'error');
+                    return Promise.reject('Failed to load courses');
+                }
+            } catch (error) {
+                console.error('Error loading courses:', error);
+                showToast('Error', 'Network error while loading courses', 'error');
+                return Promise.reject(error);
+            }
+        }
+
+        // Role-based field visibility
+        function toggleRoleFields(roleSelect, studentFieldsId, facultyFieldsId) {
+            const role = roleSelect.value;
+            const studentFields = document.getElementById(studentFieldsId);
+            const facultyFields = document.getElementById(facultyFieldsId);
+
+            studentFields.classList.toggle('hidden', role !== 'student');
+            facultyFields.classList.toggle('hidden', role !== 'faculty');
+        }
+
+        // Create user
+        document.getElementById('btnCreateUser').addEventListener('click', () => {
+            document.getElementById('createModal').classList.remove('hidden');
+        });
+
+        document.getElementById('createRole').addEventListener('change', function() {
+            toggleRoleFields(this, 'studentFields', 'facultyFields');
+        });
+
+        // Add event listener for department change to load courses
+        document.getElementById('createDepartment').addEventListener('change', function() {
+            loadCoursesByDepartment(this.value, 'createCourse');
+        });
+
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                idno: document.getElementById('createIdno').value.trim(),
+                firstname: document.getElementById('createFirstname').value.trim(),
+                lastname: document.getElementById('createLastname').value.trim(),
+                password: document.getElementById('createPassword').value,
+                role: document.getElementById('createRole').value,
+                dept_id: document.getElementById('createDepartment').value || null,
+                course_id: document.getElementById('createCourse').value || null,
+                year_level: document.getElementById('createYearLevel').value || null,
+                position: document.getElementById('createPosition').value.trim() || null,
+            };
+
+            const result = await apiCall('/admin/users/create', 'POST', data);
+            if (result.success) {
+                showToast('Success', result.message);
+                closeModal('createModal');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast('Error', result.message, 'error');
+            }
+        });
+
+        // Edit user
+        async function editUser(userId) {
+            const result = await apiCall(`/admin/users/${userId}/edit`);
+            if (result.user) {
+                const user = result.user;
+                document.getElementById('editUserId').value = user.user_id;
+                document.getElementById('editIdno').value = user.idno;
+                document.getElementById('editFirstname').value = user.firstname;
+                document.getElementById('editLastname').value = user.lastname;
+                document.getElementById('editRole').value = user.role;
+                document.getElementById('editDepartment').value = user.dept_id || '';
+                
+                if (user.role === 'student') {
+                    // Load courses for the department first, then set the course
+                    if (user.dept_id) {
+                        loadCoursesByDepartment(user.dept_id, 'editCourse').then(() => {
+                            document.getElementById('editCourse').value = user.course_id || '';
+                        });
+                    }
+                    document.getElementById('editYearLevel').value = user.year_level || '1st Year';
+                } else if (user.role === 'faculty') {
+                    document.getElementById('editPosition').value = user.position || '';
+                }
+                
+                toggleRoleFields(document.getElementById('editRole'), 'editStudentFields', 'editFacultyFields');
+                document.getElementById('editModal').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('editRole').addEventListener('change', function() {
+            toggleRoleFields(this, 'editStudentFields', 'editFacultyFields');
+        });
+
+        // Add event listener for edit department change to load courses
+        document.getElementById('editDepartment').addEventListener('change', function() {
+            loadCoursesByDepartment(this.value, 'editCourse');
+        });
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('editUserId').value;
+            const data = {
+                firstname: document.getElementById('editFirstname').value.trim(),
+                lastname: document.getElementById('editLastname').value.trim(),
+                role: document.getElementById('editRole').value,
+                dept_id: document.getElementById('editDepartment').value || null,
+                course_id: document.getElementById('editCourse').value || null,
+                year_level: document.getElementById('editYearLevel').value || null,
+                position: document.getElementById('editPosition').value.trim() || null,
+            };
+
+            const result = await apiCall(`/admin/users/${userId}/edit`, 'POST', data);
+            if (result.success) {
+                showToast('Success', result.message);
+                closeModal('editModal');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast('Error', result.message, 'error');
+            }
+        });
+
+        // Reset password
+        function resetPassword(userId, userName) {
+            document.getElementById('resetUserId').value = userId;
+            document.getElementById('resetUserName').textContent = userName;
+            document.getElementById('resetPassword').value = '';
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        document.getElementById('resetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('resetUserId').value;
+            const password = document.getElementById('resetPassword').value;
+
+            const result = await apiCall(`/admin/users/${userId}/reset-password`, 'POST', { password });
+            if (result.success) {
+                showToast('Success', result.message);
+                closeModal('resetModal');
+            } else {
+                showToast('Error', result.message, 'error');
+            }
+        });
+
+        // Toggle user status
+        async function toggleStatus(userId) {
+            if (confirm('Are you sure you want to change this user\'s status?')) {
+                const result = await apiCall(`/admin/users/${userId}/toggle`, 'POST');
+                if (result.success) {
+                    showToast('Success', result.message);
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showToast('Error', result.message, 'error');
+                }
+            }
+        }
+
+    </script>
+</body>
+</html>

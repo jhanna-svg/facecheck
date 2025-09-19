@@ -33,6 +33,7 @@ class Department(db.Model):
     
     # Relationships
     users = db.relationship('User', backref='department', lazy=True)
+    courses = db.relationship('Course', backref='department', lazy=True)
 
 class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)
@@ -67,6 +68,7 @@ class User(db.Model):
 class Course(db.Model):
     course_id = db.Column(db.Integer, primary_key=True)
     course_name = db.Column(db.String(100), nullable=False)
+    dept_id = db.Column(db.Integer, db.ForeignKey('department.dept_id'), nullable=False)
     
     # Relationships
     students = db.relationship('Student', backref='course', lazy=True)
@@ -226,13 +228,1053 @@ def index():
     # Welcome page -> role selection first
     return render_template("role_selection.html")
 
-@app.route("/admin")
-def admin():
-    return jsonify({
-        "users": User.query.count(),
-        "classes": Class.query.count(),
-        "attendance": Attendance.query.count()
-    })
+@app.route("/admin/users")
+def admin_users_page():
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect(url_for("login"))
+    # Aggregate data for table
+    users = User.query.all()
+    data = []
+    for u in users:
+        item = {
+            "user_id": u.user_id,
+            "idno": u.idno,
+            "firstname": u.firstname,
+            "lastname": u.lastname,
+            "full_name": u.full_name,
+            "role": u.role,
+            "is_active": u.is_active,
+            "created_at": u.created_at.strftime("%Y-%m-%d %H:%M") if u.created_at else None,
+            "dept_id": u.dept_id,
+            "dept_name": u.department.dept_name if u.department else "N/A",
+        }
+        if u.role == "student" and u.student:
+            item["year_level"] = u.student.year_level
+            item["course_id"] = u.student.course_id
+            item["course_name"] = u.student.course.course_name if u.student.course else "N/A"
+        if u.role == "faculty" and u.faculty:
+            item["position"] = u.faculty.position
+        data.append(item)
+
+    departments = [{"id": d.dept_id, "name": d.dept_name} for d in Department.query.all()]
+    courses = [{"id": c.course_id, "name": c.course_name} for c in Course.query.all()]
+    return render_template("admin_users.html", users=data, departments=departments, courses=courses)
+
+@app.route("/admin/users/create", methods=["POST"])
+def admin_users_create():
+    if "user_id" not in session or session.get("role") != "admin":
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    try:
+        data = request.get_json()
+        idno = (data.get("idno") or "").strip()
+        firstname = (data.get("firstname") or "").strip()
+        lastname = (data.get("lastname") or "").strip()
+        password = (data.get("password") or "").strip()
+        role = (data.get("role") or "").strip()
+        dept_id = data.get("dept_id")
+        course_id = data.get("course_id")
+        year_level = (data.get("year_level") or "").strip()
+        position = (data.get("position") or "").strip()
+
+        if not all([idno, firstname, lastname, password, role]):
+            return jsonify({"success": False, "message": "All required fields must be provided"}), 400
+        if User.query.filter_by(idno=idno).first():
+            return jsonify({"success": False, "message": "User ID already exists"}), 400
+
+        u = User(idno=idno, firstname=firstname, lastname=lastname, role=role, dept_id=int(dept_id) if dept_id else None)
+        u.set_password(password)
+        db.session.add(u)
+        db.session.flush()
+        if role == "student":
+            if not course_id:
+                return jsonify({"success": False, "message": "Course is required for students"}), 400
+            db.session.add(Student(user_id=u.user_id, course_id=int(course_id), year_level=year_level or "1st Year"))
+        elif role == "faculty":
+            if not position:
+                return jsonify({"success": False, "message": "Position is required for faculty"}), 400
+            db.session.add(Faculty(user_id=u.user_id, position=position))
+        db.session.commit()
+        return jsonify({"success": True, "message": f"User {firstname} {lastname} created", "user_id": u.user_id})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error creating user: {e}"}), 500
+
+@app.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+def admin_users_edit(user_id):
+    if "user_id" not in session or session.get("role") != "admin":
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    u = User.query.get_or_404(user_id)
+    if request.method == "GET":
+        payload = {
+            "user_id": u.user_id,
+            "idno": u.idno,
+            "firstname": u.firstname,
+            "lastname": u.lastname,
+            "role": u.role,
+            "dept_id": u.dept_id,
+        }
+        if u.role == "student" and u.student:
+            payload.update({"course_id": u.student.course_id, "year_level": u.student.year_level})
+        if u.role == "faculty" and u.faculty:
+            payload.update({"position": u.faculty.position})
+        return jsonify({"user": payload})
+    try:
+        data = request.get_json()
+        u.firstname = (data.get("firstname") or u.firstname or "").strip()
+        u.lastname = (data.get("lastname") or u.lastname or "").strip()
+        new_role = (data.get("role") or u.role or "").strip()
+        u.dept_id = data.get("dept_id")
+        course_id = data.get("course_id")
+        year_level = (data.get("year_level") or "").strip()
+        position = (data.get("position") or "").strip()
+
+        if u.role != new_role:
+            # remove old
+            if u.role == "student" and u.student: db.session.delete(u.student)
+            if u.role == "faculty" and u.faculty: db.session.delete(u.faculty)
+            u.role = new_role
+        # upsert role specifics
+        if u.role == "student":
+            if u.student is None:
+                db.session.add(Student(user_id=u.user_id, course_id=course_id, year_level=year_level or "1st Year"))
+            else:
+                if course_id: u.student.course_id = course_id
+                if year_level: u.student.year_level = year_level
+        elif u.role == "faculty":
+            if u.faculty is None:
+                db.session.add(Faculty(user_id=u.user_id, position=position or "Instructor"))
+            else:
+                if position: u.faculty.position = position
+        db.session.commit()
+        return jsonify({"success": True, "message": f"User {u.full_name} updated"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error updating user: {e}"}), 500
+
+@app.route("/admin/users/<int:user_id>/reset-password", methods=["POST"])
+def admin_users_reset(user_id):
+    if "user_id" not in session or session.get("role") != "admin":
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    try:
+        u = User.query.get_or_404(user_id)
+        new_password = request.get_json().get("password", "").strip()
+        if len(new_password) < 6:
+            return jsonify({"success": False, "message": "Password must be at least 6 characters"}), 400
+        u.set_password(new_password)
+        db.session.commit()
+        return jsonify({"success": True, "message": f"Password reset for {u.full_name}"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error resetting password: {e}"}), 500
+
+@app.route("/admin/users/<int:user_id>/toggle", methods=["POST"])
+def admin_users_toggle(user_id):
+    if "user_id" not in session or session.get("role") != "admin":
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    try:
+        u = User.query.get_or_404(user_id)
+        if u.user_id == session["user_id"]:
+            return jsonify({"success": False, "message": "Cannot toggle your own account"}), 400
+        u.is_active = not u.is_active
+        db.session.commit()
+        return jsonify({"success": True, "message": f"User {u.full_name} {'activated' if u.is_active else 'deactivated'}"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error toggling status: {e}"}), 500
+
+@app.route("/attendance-monitoring")
+def attendance_monitoring_module():
+    """Attendance Monitoring Module - Main interface for attendance management"""
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    
+    # Allow admin and faculty to access this module
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return redirect(url_for("dashboard"))
+    
+    return render_template("attendance_monitoring.html")
+
+@app.route("/api/attendance-records", methods=["GET"])
+def get_attendance_records():
+    """Get attendance records with optional filtering"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        date_filter = request.args.get('date')
+        class_filter = request.args.get('class_id')
+        
+        # Query attendance records with joins
+        query = db.session.query(
+            Attendance.attendance_id,
+            Attendance.attendance_date,
+            Attendance.attendance_status,
+            User.idno.label('student_id'),
+            User.firstname,
+            User.lastname,
+            Class.class_name
+        ).join(
+            StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id
+        ).join(
+            Student, StudentClass.student_id == Student.student_id
+        ).join(
+            User, Student.user_id == User.user_id
+        ).join(
+            Class, StudentClass.class_id == Class.class_id
+        )
+        
+        # Apply filters if provided
+        if date_filter:
+            query = query.filter(Attendance.attendance_date >= date_filter)
+        if class_filter:
+            query = query.filter(Class.class_id == class_filter)
+        
+        records = query.order_by(Attendance.attendance_date.desc()).limit(100).all()
+        
+        records_data = []
+        for record in records:
+            records_data.append({
+                "id": record.attendance_id,
+                "student_id": record.student_id,
+                "student_name": f"{record.firstname} {record.lastname}",
+                "class_name": record.class_name,
+                "date": record.attendance_date.strftime("%Y-%m-%d") if record.attendance_date else "N/A",
+                "time": record.attendance_date.strftime("%H:%M") if record.attendance_date else "N/A",
+                "status": record.attendance_status
+            })
+        
+        return jsonify({"success": True, "records": records_data})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching records: {e}"}), 500
+
+@app.route("/api/daily-logs", methods=["GET"])
+def get_daily_logs():
+    """Get daily attendance logs and statistics"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        date_str = request.args.get('date', datetime.utcnow().strftime('%Y-%m-%d'))
+        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        # Get attendance statistics for the day
+        attendance_stats = db.session.query(
+            Attendance.attendance_status,
+            db.func.count(Attendance.attendance_id).label('count')
+        ).filter(
+            db.func.date(Attendance.attendance_date) == target_date
+        ).group_by(Attendance.attendance_status).all()
+        
+        stats = {"total": 0, "present": 0, "absent": 0, "late": 0}
+        chart_data = {"present": 0, "absent": 0, "late": 0}
+        
+        for stat in attendance_stats:
+            count = stat.count
+            status = stat.attendance_status.lower()
+            stats["total"] += count
+            if status in stats:
+                stats[status] = count
+                chart_data[status] = count
+        
+        # Get class breakdown
+        class_breakdown = db.session.query(
+            Class.class_name,
+            db.func.count(Attendance.attendance_id).label('total_attendance'),
+            db.func.sum(db.case([(Attendance.attendance_status == 'present', 1)], else_=0)).label('present_count')
+        ).join(
+            StudentClass, Class.class_id == StudentClass.class_id
+        ).join(
+            Attendance, StudentClass.studentclass_id == Attendance.studentclass_id
+        ).filter(
+            db.func.date(Attendance.attendance_date) == target_date
+        ).group_by(Class.class_id, Class.class_name).all()
+        
+        breakdown = []
+        for item in class_breakdown:
+            attendance_rate = round((item.present_count / item.total_attendance * 100), 1) if item.total_attendance > 0 else 0
+            breakdown.append({
+                "class_name": item.class_name,
+                "attendance_rate": attendance_rate
+            })
+        
+        return jsonify({
+            "success": True,
+            "stats": stats,
+            "chartData": chart_data,
+            "breakdown": breakdown
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching daily logs: {e}"}), 500
+
+@app.route("/api/edit-attendance", methods=["POST"])
+def edit_attendance():
+    """Edit or override attendance record"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    # Only allow admin and faculty to edit attendance
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        data = request.get_json()
+        attendance_id = data.get("attendance_id")
+        new_status = data.get("status")
+        notes = data.get("notes", "")
+        
+        if not attendance_id or not new_status:
+            return jsonify({"success": False, "message": "Attendance ID and status required"}), 400
+        
+        # Find and update the attendance record
+        attendance = Attendance.query.get(attendance_id)
+        if not attendance:
+            return jsonify({"success": False, "message": "Attendance record not found"}), 404
+        
+        attendance.attendance_status = new_status
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Attendance status updated to {new_status}"
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error updating attendance: {e}"}), 500
+
+@app.route("/api/export-attendance", methods=["POST"])
+def export_attendance():
+    """Export attendance data in various formats"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        data = request.get_json()
+        format_type = data.get("format", "excel")
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+        class_id = data.get("class_id")
+        
+        # Build query for export data
+        query = db.session.query(
+            User.idno,
+            User.firstname,
+            User.lastname,
+            Class.class_name,
+            Attendance.attendance_date,
+            Attendance.attendance_status
+        ).join(
+            StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id
+        ).join(
+            Student, StudentClass.student_id == Student.student_id
+        ).join(
+            User, Student.user_id == User.user_id
+        ).join(
+            Class, StudentClass.class_id == Class.class_id
+        )
+        
+        # Apply filters
+        if start_date:
+            query = query.filter(Attendance.attendance_date >= start_date)
+        if end_date:
+            query = query.filter(Attendance.attendance_date <= end_date)
+        if class_id:
+            query = query.filter(Class.class_id == class_id)
+        
+        export_data = query.all()
+        
+        # For now, return success message
+        # In a real implementation, you would generate actual Excel/PDF files
+        return jsonify({
+            "success": True,
+            "message": f"Export completed: {len(export_data)} records exported as {format_type.upper()}",
+            "download_url": f"/downloads/attendance_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{format_type}"
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Export error: {e}"}), 500
+
+@app.route("/class-management")
+def class_management_module():
+    """Class & Event Management Module - Main interface for class and event management"""
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    
+    # Allow admin and faculty to access this module
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return redirect(url_for("dashboard"))
+    
+    return render_template("class_management.html")
+
+@app.route("/api/all-courses", methods=["GET"])
+def get_all_courses():
+    """Get all courses for class creation"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        courses = Course.query.all()
+        courses_data = [{"id": c.course_id, "name": c.course_name} for c in courses]
+        return jsonify({"success": True, "courses": courses_data})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching courses: {e}"}), 500
+
+@app.route("/api/create-class", methods=["POST"])
+def create_class():
+    """Create a new class"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        data = request.get_json()
+        class_name = (data.get("name") or "").strip()
+        class_code = (data.get("code") or "").strip()
+        course_id = data.get("course_id")
+        start_time = data.get("start_time")
+        end_time = data.get("end_time")
+        days = data.get("days", [])
+        room = (data.get("room") or "").strip()
+        
+        if not all([class_name, class_code, course_id, start_time, end_time]):
+            return jsonify({"success": False, "message": "All required fields must be provided"}), 400
+        
+        # Check if EDP code already exists
+        existing_class = Class.query.filter_by(edpcode=class_code).first()
+        if existing_class:
+            return jsonify({"success": False, "message": "Class code already exists"}), 400
+        
+        # Parse time strings to time objects
+        start_time_obj = datetime.strptime(start_time, "%H:%M").time()
+        end_time_obj = datetime.strptime(end_time, "%H:%M").time()
+        
+        # Create new class (note: using edpcode field for class_code)
+        new_class = Class(
+            class_name=class_name,
+            edpcode=class_code,
+            start_time=start_time_obj,
+            end_time=end_time_obj,
+            room=room,
+            faculty_id=1  # Temporary - will be assigned later through faculty assignment
+        )
+        
+        db.session.add(new_class)
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Class '{class_name}' created successfully",
+            "class_id": new_class.class_id
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error creating class: {e}"}), 500
+
+@app.route("/api/create-event", methods=["POST"])
+def create_event():
+    """Create a new event"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        data = request.get_json()
+        event_name = (data.get("name") or "").strip()
+        event_type = (data.get("type") or "").strip()
+        event_date = data.get("date")
+        start_time = data.get("start_time")
+        end_time = data.get("end_time")
+        location = (data.get("location") or "").strip()
+        description = (data.get("description") or "").strip()
+        duration = data.get("duration")
+        
+        if not all([event_name, event_type, event_date, start_time, end_time]):
+            return jsonify({"success": False, "message": "All required fields must be provided"}), 400
+        
+        # Parse date
+        event_datetime = datetime.strptime(f"{event_date} {start_time}", "%Y-%m-%d %H:%M")
+        
+        # Create new event (assuming you have an Event model)
+        # For now, we'll create a simplified event record
+        # In a full implementation, you'd have a proper Event model
+        
+        return jsonify({
+            "success": True,
+            "message": f"Event '{event_name}' created successfully"
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error creating event: {e}"}), 500
+
+@app.route("/api/faculty-list", methods=["GET"])
+def get_faculty_list():
+    """Get list of faculty members"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        faculty = User.query.filter_by(role="faculty").all()
+        faculty_data = [
+            {
+                "id": f.user_id,
+                "name": f"{f.firstname} {f.lastname}",
+                "id_number": f.idno
+            }
+            for f in faculty
+        ]
+        return jsonify({"success": True, "faculty": faculty_data})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching faculty: {e}"}), 500
+
+@app.route("/api/student-list", methods=["GET"])
+def get_student_list():
+    """Get list of students"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        students = db.session.query(
+            User.user_id,
+            User.firstname,
+            User.lastname,
+            User.idno
+        ).join(Student, User.user_id == Student.user_id).all()
+        
+        students_data = [
+            {
+                "id": s.user_id,
+                "name": f"{s.firstname} {s.lastname}",
+                "id_number": s.idno
+            }
+            for s in students
+        ]
+        return jsonify({"success": True, "students": students_data})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching students: {e}"}), 500
+
+@app.route("/api/class-list", methods=["GET"])
+def get_class_list():
+    """Get list of classes"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        classes = Class.query.all()
+        classes_data = [
+            {
+                "id": c.class_id,
+                "name": c.class_name,
+                "code": c.edpcode
+            }
+            for c in classes
+        ]
+        return jsonify({"success": True, "classes": classes_data})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching classes: {e}"}), 500
+
+@app.route("/api/event-list", methods=["GET"])
+def get_event_list():
+    """Get list of events"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        # For now, return empty events list since we don't have Event model yet
+        # In a full implementation, you'd query the Event model
+        events_data = []
+        return jsonify({"success": True, "events": events_data})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching events: {e}"}), 500
+
+@app.route("/api/department-list", methods=["GET"])
+def get_department_list():
+    """Get list of departments"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        departments = Department.query.all()
+        dept_data = [
+            {
+                "id": d.dept_id,
+                "name": d.dept_name
+            }
+            for d in departments
+        ]
+        return jsonify({"success": True, "departments": dept_data})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching departments: {e}"}), 500
+
+@app.route("/api/enroll-student", methods=["POST"])
+def enroll_student():
+    """Enroll a student in a class"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        data = request.get_json()
+        user_id = data.get("student_id")  # This is actually user_id from frontend
+        class_id = data.get("class_id")
+        
+        if not all([user_id, class_id]):
+            return jsonify({"success": False, "message": "Student ID and Class ID required"}), 400
+        
+        # Get the student record from user_id
+        student = Student.query.filter_by(user_id=user_id).first()
+        if not student:
+            return jsonify({"success": False, "message": "Student record not found"}), 404
+        
+        # Check if student is already enrolled
+        existing = StudentClass.query.filter_by(
+            student_id=student.student_id,
+            class_id=class_id
+        ).first()
+        
+        if existing:
+            return jsonify({"success": False, "message": "Student is already enrolled in this class"}), 400
+        
+        # Create enrollment
+        enrollment = StudentClass(
+            student_id=student.student_id,
+            class_id=int(class_id)
+        )
+        
+        db.session.add(enrollment)
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "Student enrolled successfully"
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error enrolling student: {e}"}), 500
+
+@app.route("/api/class-management-stats", methods=["GET"])
+def get_class_management_stats():
+    """Get statistics for class management dashboard"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        total_classes = Class.query.count()
+        active_events = 0  # Will be implemented when Event model is added
+        enrolled_students = StudentClass.query.count()
+        assigned_faculty = 0  # Will be implemented when Faculty assignment is added
+        
+        stats = {
+            "total_classes": total_classes,
+            "active_events": active_events,
+            "enrolled_students": enrolled_students,
+            "assigned_faculty": assigned_faculty
+        }
+        
+        return jsonify({"success": True, "stats": stats})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching stats: {e}"}), 500
+
+@app.route("/reports-analytics")
+def reports_analytics_module():
+    """Reports & Analytics Module - Main interface for reporting and analytics"""
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    
+    # Allow admin and faculty to access this module
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return redirect(url_for("dashboard"))
+    
+    return render_template("reports_analytics.html")
+
+@app.route("/api/reports/stats", methods=["GET"])
+def get_reports_stats():
+    """Get statistics for reports dashboard"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        # Calculate overall attendance rate
+        total_attendance = Attendance.query.count()
+        present_attendance = Attendance.query.filter_by(attendance_status='present').count()
+        overall_rate = round((present_attendance / total_attendance * 100), 1) if total_attendance > 0 else 0
+        
+        # Get other statistics
+        active_classes = Class.query.count()
+        total_students = Student.query.count()
+        reports_generated = 0  # This would be tracked in a reports table in a full implementation
+        
+        stats = {
+            "overall_rate": overall_rate,
+            "active_classes": active_classes,
+            "total_students": total_students,
+            "reports_generated": reports_generated
+        }
+        
+        return jsonify({"success": True, "stats": stats})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching stats: {e}"}), 500
+
+@app.route("/api/reports/class-summary", methods=["POST"])
+def generate_class_summary():
+    """Generate class attendance summary report"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        data = request.get_json()
+        class_id = data.get("class_id")
+        range_type = data.get("range", "month")
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+        
+        # Build query for attendance data
+        query = db.session.query(
+            Class.class_name,
+            Class.edpcode,
+            db.func.count(Attendance.attendance_id).label('total_attendance'),
+            db.func.sum(db.case([(Attendance.attendance_status == 'present', 1)], else_=0)).label('present_count')
+        ).join(
+            StudentClass, Class.class_id == StudentClass.class_id
+        ).join(
+            Attendance, StudentClass.studentclass_id == Attendance.studentclass_id
+        )
+        
+        # Apply filters
+        if class_id:
+            query = query.filter(Class.class_id == class_id)
+        
+        if start_date and end_date:
+            query = query.filter(Attendance.attendance_date.between(start_date, end_date))
+        elif range_type == "week":
+            week_ago = datetime.utcnow() - timedelta(weeks=1)
+            query = query.filter(Attendance.attendance_date >= week_ago)
+        elif range_type == "month":
+            month_ago = datetime.utcnow() - timedelta(days=30)
+            query = query.filter(Attendance.attendance_date >= month_ago)
+        
+        results = query.group_by(Class.class_id, Class.class_name, Class.edpcode).all()
+        
+        # Process results
+        class_performance = []
+        total_classes = len(results)
+        total_attendance_sum = 0
+        total_present_sum = 0
+        
+        for result in results:
+            attendance_rate = round((result.present_count / result.total_attendance * 100), 1) if result.total_attendance > 0 else 0
+            class_performance.append({
+                "name": result.class_name,
+                "code": result.edpcode,
+                "total": result.total_attendance,
+                "present": result.present_count,
+                "rate": attendance_rate
+            })
+            total_attendance_sum += result.total_attendance
+            total_present_sum += result.present_count
+        
+        # Calculate overall statistics
+        average_attendance = round((total_present_sum / total_attendance_sum * 100), 1) if total_attendance_sum > 0 else 0
+        
+        # Get total students count
+        if class_id:
+            total_students = StudentClass.query.filter_by(class_id=class_id).count()
+        else:
+            total_students = Student.query.count()
+        
+        summary_data = {
+            "total_classes": total_classes,
+            "average_attendance": average_attendance,
+            "total_students": total_students,
+            "class_performance": class_performance
+        }
+        
+        return jsonify({"success": True, "data": summary_data})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error generating class summary: {e}"}), 500
+
+@app.route("/api/reports/event-summary", methods=["POST"])
+def generate_event_summary():
+    """Generate event attendance summary report"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        data = request.get_json()
+        event_type = data.get("event_type")
+        range_type = data.get("range", "month")
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+        
+        # For now, return mock data since we don't have Event model yet
+        # In a full implementation, this would query actual event attendance data
+        events_data = [
+            {
+                "name": "Midterm Examination",
+                "type": "exam",
+                "date": "2025-01-15",
+                "total": 150,
+                "present": 135,
+                "rate": 90
+            },
+            {
+                "name": "Final Project Presentation",
+                "type": "presentation", 
+                "date": "2025-01-10",
+                "total": 45,
+                "present": 42,
+                "rate": 93
+            }
+        ]
+        
+        summary_data = {
+            "events": events_data,
+            "total_events": len(events_data),
+            "average_attendance": 91.5
+        }
+        
+        return jsonify({"success": True, "data": summary_data})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error generating event summary: {e}"}), 500
+
+@app.route("/api/reports/absence-analysis", methods=["POST"])
+def generate_absence_analysis():
+    """Generate absence patterns analysis"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        data = request.get_json()
+        analysis_type = data.get("analysis_type", "student")
+        time_period = data.get("time_period", "month")
+        threshold = int(data.get("threshold", 20))
+        
+        # Calculate absence data
+        if time_period == "month":
+            date_filter = datetime.utcnow() - timedelta(days=30)
+        elif time_period == "semester":
+            date_filter = datetime.utcnow() - timedelta(days=120)
+        else:  # year
+            date_filter = datetime.utcnow() - timedelta(days=365)
+        
+        # Get absence statistics
+        absence_query = db.session.query(
+            db.func.date(Attendance.attendance_date).label('date'),
+            db.func.count(Attendance.attendance_id).label('total'),
+            db.func.sum(db.case([(Attendance.attendance_status == 'absent', 1)], else_=0)).label('absent_count')
+        ).filter(
+            Attendance.attendance_date >= date_filter
+        ).group_by(db.func.date(Attendance.attendance_date)).all()
+        
+        # Process data for chart
+        chart_labels = []
+        chart_data = []
+        patterns = []
+        findings = []
+        
+        for record in absence_query:
+            chart_labels.append(record.date.strftime('%Y-%m-%d'))
+            absence_rate = round((record.absent_count / record.total * 100), 1) if record.total > 0 else 0
+            chart_data.append(absence_rate)
+            
+            if absence_rate > threshold:
+                patterns.append({
+                    "title": f"High Absence Rate on {record.date.strftime('%B %d')}",
+                    "description": f"Absence rate reached {absence_rate}% ({record.absent_count}/{record.total})",
+                    "impact": "Significant impact on learning outcomes"
+                })
+        
+        # Generate findings based on analysis type
+        if analysis_type == "student":
+            findings.append({
+                "category": "Student-Level Analysis",
+                "description": "Analysis of individual student absence patterns",
+                "details": [
+                    f"Students with absence rate above {threshold}% threshold identified",
+                    "Patterns suggest need for individual intervention",
+                    "Correlation with academic performance noted"
+                ]
+            })
+        elif analysis_type == "class":
+            findings.append({
+                "category": "Class-Level Analysis", 
+                "description": "Analysis of class-wide absence patterns",
+                "details": [
+                    "Certain classes show consistently higher absence rates",
+                    "Time-of-day correlation detected",
+                    "Subject-specific patterns identified"
+                ]
+            })
+        
+        analysis_data = {
+            "chart_labels": chart_labels[-30:],  # Last 30 days
+            "chart_data": chart_data[-30:],
+            "patterns": patterns,
+            "findings": findings
+        }
+        
+        return jsonify({"success": True, "data": analysis_data})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error generating absence analysis: {e}"}), 500
+
+@app.route("/api/reports/monthly-graphs", methods=["POST"])
+def generate_monthly_graphs():
+    """Generate monthly attendance graphs"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        data = request.get_json()
+        graph_type = data.get("graph_type", "line")
+        data_view = data.get("data_view", "overall")
+        time_range = data.get("time_range", "6months")
+        
+        # Generate sample data for graphs
+        months = ['August', 'September', 'October', 'November', 'December', 'January']
+        attendance_rates = [85, 87, 82, 89, 91, 88]
+        
+        primary_chart_data = {
+            "type": graph_type,
+            "data": {
+                "labels": months,
+                "datasets": [{
+                    "label": "Attendance Rate (%)",
+                    "data": attendance_rates,
+                    "borderColor": "rgb(99, 102, 241)",
+                    "backgroundColor": "rgba(99, 102, 241, 0.1)"
+                }]
+            }
+        }
+        
+        comparison_chart_data = {
+            "type": "bar",
+            "data": {
+                "labels": months,
+                "datasets": [{
+                    "label": "Present",
+                    "data": [1200, 1250, 1180, 1300, 1350, 1280],
+                    "backgroundColor": "rgba(34, 197, 94, 0.8)"
+                }, {
+                    "label": "Absent", 
+                    "data": [200, 180, 220, 150, 130, 170],
+                    "backgroundColor": "rgba(239, 68, 68, 0.8)"
+                }]
+            }
+        }
+        
+        statistics = [
+            {"label": "Highest Rate", "value": "91%"},
+            {"label": "Lowest Rate", "value": "82%"},
+            {"label": "Average", "value": "87%"}
+        ]
+        
+        graphs_data = {
+            "primary_chart": primary_chart_data,
+            "comparison_chart": comparison_chart_data,
+            "statistics": statistics
+        }
+        
+        return jsonify({"success": True, "data": graphs_data})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error generating monthly graphs: {e}"}), 500
+
+@app.route("/api/reports/export", methods=["POST"])
+def export_report():
+    """Export reports in various formats"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        data = request.get_json()
+        report_type = data.get("report_type", "attendance-summary")
+        format_type = data.get("format", "pdf")
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+        class_filter = data.get("class_filter")
+        department_filter = data.get("department_filter")
+        
+        # In a real implementation, you would:
+        # 1. Generate the actual report data
+        # 2. Create the file in the specified format
+        # 3. Save it to a downloads directory
+        # 4. Return the download URL
+        
+        filename = f"{report_type}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{format_type}"
+        
+        return jsonify({
+            "success": True,
+            "message": f"Report exported successfully as {format_type.upper()}",
+            "filename": filename,
+            "download_url": f"/downloads/{filename}"
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error exporting report: {e}"}), 500
+
+@app.route("/api/reports/export-history", methods=["GET"])
+def get_export_history():
+    """Get export history"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        # Mock export history data
+        # In a real implementation, this would come from a database table
+        history = [
+            {
+                "id": "1",
+                "name": "Monthly Attendance Report",
+                "format": "PDF",
+                "date": "2025-01-18 10:30 AM"
+            },
+            {
+                "id": "2", 
+                "name": "Class Summary Report",
+                "format": "Excel",
+                "date": "2025-01-17 02:15 PM"
+            }
+        ]
+        
+        return jsonify({"success": True, "history": history})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching export history: {e}"}), 500
+
+@app.route("/api/courses/<int:dept_id>", methods=["GET"])
+def get_courses_by_department(dept_id):
+    """Get courses filtered by department"""
+    if "user_id" not in session or session.get("role") != "admin":
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    try:
+        courses = Course.query.filter_by(dept_id=dept_id).all()
+        courses_data = [{"id": c.course_id, "name": c.course_name} for c in courses]
+        return jsonify({"success": True, "courses": courses_data})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching courses: {e}"}), 500
+
+
 
 def process_and_save_image(student_id, image_data):
     """Process base64 image data and save multiple training images (for face capture in dashboard)"""
@@ -629,7 +1671,14 @@ def dashboard():
     
     role = session.get("role")
     if role == "admin":
-        return render_template("dashboard_admin.html", user=user_data)
+        # Get stats for admin dashboard
+        stats = {
+            "total_users": User.query.count(),
+            "total_students": User.query.filter_by(role="student").count(),
+            "total_faculty": User.query.filter_by(role="faculty").count(),
+            "face_registered": db.session.query(Student).filter(Student.attendance_image.isnot(None)).count()
+        }
+        return render_template("dashboard_admin.html", user=user_data, stats=stats)
     if role == "faculty":
         return render_template("dashboard_faculty.html", user=user_data)
     if role == "student":

@@ -95,7 +95,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Total Users</p>
-                        <p class="text-2xl font-bold text-primary-900">--</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ stats.total_users }}</p>
                     </div>
                 </div>
             </div>
@@ -109,7 +109,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Students</p>
-                        <p class="text-2xl font-bold text-primary-900">--</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ stats.total_students }}</p>
                     </div>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Faculty</p>
-                        <p class="text-2xl font-bold text-primary-900">--</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ stats.total_faculty }}</p>
                     </div>
                 </div>
             </div>
@@ -138,7 +138,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-600">Face Registered</p>
-                        <p class="text-2xl font-bold text-primary-900">--</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ stats.face_registered }}</p>
                     </div>
                 </div>
             </div>
@@ -162,8 +162,8 @@
                                 <h4 class="text-lg font-medium text-primary-900 ml-3">User Management</h4>
                             </div>
                             <p class="text-sm text-primary-600 mb-3">View and manage all system users</p>
-                            <a href="/admin" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
-                                View Users
+                            <a href="/admin/users" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+                                Manage Users
                                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                 </svg>
@@ -190,95 +190,69 @@
                             </button>
                         </div>
 
-                        <!-- Face Recognition -->
+                        
+
+                        <!-- Attendance Monitoring -->
+                        <div class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                            <div class="flex items-center mb-3">
+                                <div class="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                                    </svg>
+                                </div>
+                                <h4 class="text-lg font-medium text-primary-900 ml-3">Attendance Monitoring</h4>
+                            </div>
+                            <p class="text-sm text-primary-600 mb-3">View, edit, and manage attendance records</p>
+                            <a href="/attendance-monitoring" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+                                Open Module
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </a>
+                        </div>
+
+                        <!-- Class & Event Management -->
                         <div class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
                             <div class="flex items-center mb-3">
                                 <div class="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
                                     <svg class="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                     </svg>
                                 </div>
-                                <h4 class="text-lg font-medium text-primary-900 ml-3">Train Model</h4>
+                                <h4 class="text-lg font-medium text-primary-900 ml-3">Class & Event Management</h4>
                             </div>
-                            <p class="text-sm text-primary-600 mb-3">Update face recognition model</p>
-                            <button onclick="trainModel()" class="inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-800">
-                                Train Now
+                            <p class="text-sm text-primary-600 mb-3">Create classes, schedule events, and manage enrollments</p>
+                            <a href="/class-management" class="inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-800">
+                                Open Module
                                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                 </svg>
-                            </button>
+                            </a>
                         </div>
 
-                        <!-- System Reports -->
+                        <!-- Reports & Analytics -->
                         <div class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
                             <div class="flex items-center mb-3">
-                                <div class="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
-                                    <svg class="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="h-8 w-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                     </svg>
                                 </div>
-                                <h4 class="text-lg font-medium text-primary-900 ml-3">System Reports</h4>
+                                <h4 class="text-lg font-medium text-primary-900 ml-3">Reports & Analytics</h4>
                             </div>
-                            <p class="text-sm text-primary-600 mb-3">Generate system usage reports</p>
-                            <button class="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-800">
-                                View Reports
+                            <p class="text-sm text-primary-600 mb-3">Generate attendance reports and analytics</p>
+                            <a href="/reports-analytics" class="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-800">
+                                Open Module
                                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                 </svg>
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- System Status -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                    <h3 class="text-xl font-semibold text-primary-900 mb-6">System Status</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-primary-700">Face Recognition Model</span>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                Active
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-primary-700">Database Connection</span>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                Connected
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-primary-700">Attendance Sessions</span>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                0 Active
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-primary-700">System Load</span>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                Normal
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 pt-6 border-t border-gray-200">
-                        <h4 class="text-lg font-medium text-primary-900 mb-3">Quick Actions</h4>
-                        <div class="space-y-2">
-                            <button class="w-full text-left px-3 py-2 text-sm font-medium text-primary-700 hover:bg-gray-50 rounded-lg transition-colors duration-200">
-                                View System Logs
-                            </button>
-                            <button class="w-full text-left px-3 py-2 text-sm font-medium text-primary-700 hover:bg-gray-50 rounded-lg transition-colors duration-200">
-                                Backup Database
-                            </button>
-                            <button class="w-full text-left px-3 py-2 text-sm font-medium text-primary-700 hover:bg-gray-50 rounded-lg transition-colors duration-200">
-                                Clear Cache
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
         </div>
 
         <!-- Footer -->
@@ -307,11 +281,7 @@
         });
         {% endif %}
 
-        function trainModel() {
-            if (confirm('This will update the face recognition model with all registered faces. This may take several minutes. Continue?')) {
-                window.location.href = '/train';
-            }
-        }
+        
     </script>
 </body>
 </html>
