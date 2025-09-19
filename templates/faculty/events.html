@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class & Events - Faculty - FaceCheck</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { primary: {50:'#f8fafc',100:'#f1f5f9',600:'#475569',700:'#334155',800:'#1e293b',900:'#0f172a'} } } } }
+    </script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 font-sans">
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <a href="/dashboard" class="text-primary-900 font-semibold">← Back to Dashboard</a>
+            <h1 class="text-lg font-bold text-primary-900">Class & Events</h1>
+            <div></div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-primary-900">Your Events</h2>
+                <button onclick="showEventsExportOptions()" class="px-3 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm">
+                    Export Data
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for ev in events %}
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-primary-900">{{ ev.event_name }}</h3>
+                        <span class="text-xs text-primary-600">{{ ev.event_date.date() }}</span>
+                    </div>
+                    <p class="text-sm text-primary-700 mb-2">{{ ev.desc }}</p>
+                    <p class="text-xs text-primary-600">Room: {{ ev.room }}</p>
+                </div>
+                {% else %}
+                <div class="col-span-full text-center text-primary-600 py-8">No events found.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options Modal -->
+    <div id="eventsExportModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+            <h3 class="text-xl font-bold text-primary-900 mb-4">Export Events Data</h3>
+            <p class="text-primary-600 mb-4">Choose the format for your export:</p>
+            <div class="space-y-3">
+                <button onclick="exportEventsToPDF()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                    Export to PDF
+                </button>
+                <button onclick="exportEventsToExcel()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                    Export to Excel
+                </button>
+                <button onclick="exportEventsToCSV()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                    Export to CSV
+                </button>
+            </div>
+            <button onclick="closeEventsExportModal()" class="w-full mt-4 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function showEventsExportOptions() {
+            document.getElementById('eventsExportModal').classList.remove('hidden');
+        }
+
+        function closeEventsExportModal() {
+            document.getElementById('eventsExportModal').classList.add('hidden');
+        }
+
+        function exportEventsToPDF() {
+            window.location.href = '/classes/events/export/pdf';
+            closeEventsExportModal();
+        }
+
+        function exportEventsToExcel() {
+            window.location.href = '/classes/events/export/excel';
+            closeEventsExportModal();
+        }
+
+        function exportEventsToCSV() {
+            window.location.href = '/classes/events/export/csv';
+            closeEventsExportModal();
+        }
+    </script>
+</body>
+</html>
+
