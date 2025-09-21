@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Registration - FaceCheck Enterprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Force override any accent colors with gray */
+        input:focus, select:focus {
+            border-color: #6b7280 !important; /* gray-500 */
+            box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.5) !important; /* gray-500 with opacity */
+        }
+        
+        /* Ensure all form elements use gray borders */
+        input, select {
+            border-color: #d1d5db !important; /* gray-300 */
+        }
+        
+        /* Override any Tailwind accent colors */
+        .focus\:border-accent-600:focus {
+            border-color: #6b7280 !important; /* gray-500 */
+        }
+        
+        .focus\:ring-accent-600:focus {
+            box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.5) !important; /* gray-500 with opacity */
+        }
+        
+        /* Override any remaining accent colors */
+        .border-accent-500 {
+            border-color: #6b7280 !important; /* gray-500 */
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 font-sans">
+    <!-- Navigation Header -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 h-10 w-10 bg-primary-800 rounded-lg flex items-center justify-center">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-primary-900">FaceCheck</h1>
+                        <p class="text-xs text-primary-600">Enterprise Solution</p>
+                    </div>
+                </div>
+                <div class="hidden sm:flex items-center space-x-4">
+                    <span class="text-sm text-primary-600">Attendance Management System</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Success Notification Modal -->
+    <div id="successModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform scale-95 opacity-0 transition-all duration-300" id="successModalContent">
+            <div class="p-6">
+                <!-- Success Icon -->
+                <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full">
+                    <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                
+                <!-- Title -->
+                <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">Account Created Successfully!</h3>
+                
+                <!-- Message -->
+                <div class="text-center mb-6">
+                    <p class="text-lg text-gray-700 mb-2" id="successName">Welcome [Name]!</p>
+                    <p class="text-sm text-gray-600" id="successAccountType">Your account has been created successfully.</p>
+                    <p class="text-sm text-gray-600 mt-2">You can now login and complete face registration in your dashboard.</p>
+                </div>
+                
+                <!-- Action Button -->
+                <div class="flex justify-center">
+                    <button 
+                        id="proceedToLogin"
+                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-200 transform hover:scale-105 shadow-lg"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                        </svg>
+                        Continue to Sign In
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Notification Modal -->
+    <div id="errorModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform scale-95 opacity-0 transition-all duration-300" id="errorModalContent">
+            <div class="p-6">
+                <!-- Error Icon -->
+                <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                
+                <!-- Title -->
+                <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">Registration Failed</h3>
+                
+                <!-- Message -->
+                <div class="text-center mb-6">
+                    <p class="text-sm text-gray-600" id="errorMessage">Something went wrong. Please try again.</p>
+                </div>
+                
+                <!-- Action Button -->
+                <div class="flex justify-center">
+                    <button 
+                        id="dismissError"
+                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-200 transform hover:scale-105 shadow-lg"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="max-w-md mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-primary-900 mb-2">Admin Registration</h2>
+                <p class="text-sm text-primary-600">Register new student or faculty member</p>
+            </div>
+
+            <!-- Main Registration Card -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-lg">
+                <!-- Registration Form -->
+                <form method="post" action="/register/student" class="p-6 space-y-6" id="registrationForm">
+                    <!-- Role Selection (Admin chooses) -->
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700 mb-3">Role</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                            <select 
+                                id="role" 
+                                name="role"
+                                required 
+                                onchange="toggleRoleFields()"
+                                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                            >
+                                <option value="">Select Role</option>
+                                <option value="student">Student</option>
+                                <option value="faculty">Faculty</option>
+                            </select>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Choose whether to register a student or faculty member</p>
+                    </div>
+                    <!-- First Name and Last Name Fields -->
+                    <div id="nameFields" class="hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- First Name Field -->
+                        <div>
+                            <label for="firstname" class="block text-sm font-medium text-gray-700 mb-3">First Name</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="firstname" 
+                                    name="firstname"
+                                    placeholder="First name" 
+                                    required 
+                                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Last Name Field -->
+                        <div>
+                            <label for="lastname" class="block text-sm font-medium text-gray-700 mb-3">Last Name</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="lastname" 
+                                    name="lastname"
+                                    placeholder="Last name" 
+                                    required 
+                                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                                >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ID Field (Dynamic based on role) -->
+                    <div id="idField" class="hidden">
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-3" id="idLabel">ID</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V4a2 2 0 114 0v2m-4 0a2 2 0 104 0m-4 0v2m0 0v9a2 2 0 002 2h2a2 2 0 002-2V8a2 2 0 00-2-2h-2m-4 0V6a2 2 0 012-2h2a2 2 0 012 2v2"></path>
+                                </svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username"
+                                placeholder="Enter ID" 
+                                required 
+                                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                            >
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500" id="idHelperText">
+                            Enter a unique ID number
+                        </p>
+                    </div>
+
+
+
+                    <!-- Role-specific Fields Row -->
+                    <div id="roleFields" class="hidden">
+                        <!-- Student Fields -->
+                        <div id="studentFields" class="hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Year Level Field (Students only) -->
+                            <div>
+                                <label for="year_level" class="block text-sm font-medium text-gray-700 mb-3">Year Level</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                        </svg>
+                                    </div>
+                                    <select 
+                                        id="year_level" 
+                                        name="year_level"
+                                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                                    >
+                                        <option value="">Select Year Level</option>
+                                        <option value="1st Year">1st Year</option>
+                                        <option value="2nd Year">2nd Year</option>
+                                        <option value="3rd Year">3rd Year</option>
+                                        <option value="4th Year">4th Year</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Department Field (Students only) -->
+                                <div>
+                                    <label for="dept_id" class="block text-sm font-medium text-gray-700 mb-3">Department</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                            </svg>
+                                        </div>
+                                        <select 
+                                            id="dept_id" 
+                                            name="dept_id"
+                                            onchange="updateCourseOptions()"
+                                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                                        >
+                                            <option value="">Select Department</option>
+                                            <option value="1">CCS - College of Computer Studies</option>
+                                            <option value="2">COE - College of Engineering</option>
+                                            <option value="3">CBM - College of Business & Management</option>
+                                            <option value="4">CAS - College of Arts & Sciences</option>
+                                            <option value="5">CON - College of Nursing</option>
+                                            <option value="6">COED - College of Education</option>
+                                            <option value="7">COM - College of Medicine</option>
+                                            <option value="8">COA - College of Architecture</option>
+                                            <option value="9">COT - College of Tourism & Hospitality</option>
+                                            <option value="10">COC - College of Communication</option>
+                                    </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Course Field (Students only) - appears after department selection -->
+                            <div id="courseField" class="hidden">
+                                <label for="course_id" class="block text-sm font-medium text-gray-700 mb-3">Course/Program</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                    </div>
+                                    <select 
+                                        id="course_id" 
+                                        name="course_id"
+                                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                                    >
+                                        <option value="">Select Course/Program</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Faculty Fields -->
+                        <div id="facultyFields" class="hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Department Field (Faculty only) -->
+                            <div>
+                                <label for="faculty_dept_id" class="block text-sm font-medium text-gray-700 mb-3">Department</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                    </div>
+                                    <select 
+                                        id="faculty_dept_id" 
+                                        name="dept_id"
+                                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                                    >
+                                        <option value="">Select Department</option>
+                                            <option value="1">CCS - College of Computer Studies</option>
+                                            <option value="2">COE - College of Engineering</option>
+                                            <option value="3">CBM - College of Business & Management</option>
+                                            <option value="4">CAS - College of Arts & Sciences</option>
+                                            <option value="5">CON - College of Nursing</option>
+                                            <option value="6">COED - College of Education</option>
+                                            <option value="7">COM - College of Medicine</option>
+                                            <option value="8">COA - College of Architecture</option>
+                                            <option value="9">COT - College of Tourism & Hospitality</option>
+                                            <option value="10">COC - College of Communication</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Position Field (Faculty only) -->
+                            <div>
+                                    <label for="position" class="block text-sm font-medium text-gray-700 mb-3">Position/Title</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m0 0v10a2 2 0 01-2 2H10a2 2 0 01-2-2V6"></path>
+                                        </svg>
+                                    </div>
+                                    <select 
+                                        id="position" 
+                                        name="position"
+                                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                                    >
+                                        <option value="">Select Position</option>
+                                        <option value="Professor">Professor</option>
+                                        <option value="Associate Professor">Associate Professor</option>
+                                        <option value="Assistant Professor">Assistant Professor</option>
+                                        <option value="Instructor">Instructor</option>
+                                        <option value="Lecturer">Lecturer</option>
+                                        <option value="Department Head">Department Head</option>
+                                        <option value="Dean">Dean</option>
+                                    </select>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Fields -->
+                    <div id="passwordFields" class="hidden">
+                    <!-- Password Field -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-3">Password</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password"
+                                placeholder="Create a secure password" 
+                                required 
+                                minlength="6"
+                                    class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                            >
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Password must be at least 6 characters long</p>
+                    </div>
+
+                    <!-- Confirm Password Field -->
+                    <div>
+                        <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-3">Confirm Password</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            <input 
+                                type="password" 
+                                id="confirm_password" 
+                                name="confirm_password"
+                                placeholder="Confirm your password" 
+                                required 
+                                    class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition duration-200 sm:text-sm"
+                            >
+                        </div>
+                        <div id="passwordError" class="mt-2 text-xs text-red-600 hidden">Passwords do not match</div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div id="submitButtonContainer" class="pt-8">
+                        <button 
+                            type="submit" 
+                            id="registerBtn"
+                            class="w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-500 cursor-not-allowed transition duration-200"
+                        >
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                            </svg>
+                            <span id="registerButtonText">Select Role First</span>
+                            <svg id="registerLoadingIcon" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+    </form>
+
+                <!-- Navigation Options -->
+                <div class="pt-8 border-t border-gray-200 mt-8 pb-6">
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600 mb-3">Already have an account?</p>
+                        <a 
+                            href="/login"
+                            class="inline-flex items-center justify-center py-2.5 px-5 border border-gray-400 text-sm font-medium rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-200"
+                        >
+                            <svg class="h-4 w-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1"></path>
+                            </svg>
+                            Sign In Instead
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-primary-900 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-primary-400 text-sm">
+                © 2025 FaceCheck Enterprise
+            </p>
+    </div>
+    </footer>
+
+    <script>
+        // Get form elements
+        const registrationForm = document.getElementById('registrationForm');
+        const passwordField = document.getElementById('password');
+        const confirmPasswordField = document.getElementById('confirm_password');
+        const passwordError = document.getElementById('passwordError');
+        const registerBtn = document.getElementById('registerBtn');
+        const registerButtonText = document.getElementById('registerButtonText');
+        const registerLoadingIcon = document.getElementById('registerLoadingIcon');
+        const usernameInput = document.getElementById('username');
+
+        // Auto-focus first name field on page load
+        window.addEventListener('load', function() {
+            document.getElementById('firstname').focus();
+        });
+
+        // Username input validation and formatting (for both student ID and faculty ID)
+        usernameInput.addEventListener('input', function() {
+            // Allow alphanumeric characters and hyphens only
+            this.value = this.value.replace(/[^a-zA-Z0-9-]/g, '');
+        });
+
+        // Password matching validation
+        function validatePasswords() {
+            const password = passwordField.value;
+            const confirmPassword = confirmPasswordField.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                passwordError.classList.remove('hidden');
+                confirmPasswordField.classList.add('border-red-500');
+                return false;
+            } else {
+                passwordError.classList.add('hidden');
+                confirmPasswordField.classList.remove('border-red-500');
+                return true;
+            }
+        }
+
+        // Real-time password validation
+        confirmPasswordField.addEventListener('input', validatePasswords);
+        passwordField.addEventListener('input', function() {
+            if (confirmPasswordField.value) {
+                validatePasswords();
+            }
+        });
+
+        // Enhanced focus effects for all input fields
+        const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"], select');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('ring-2', 'ring-primary-700', 'ring-opacity-50');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('ring-2', 'ring-primary-700', 'ring-opacity-50');
+            });
+        });
+
+        // Toggle role-specific fields based on role selection
+        function toggleRoleFields() {
+            const roleSelect = document.getElementById('role');
+            const roleFields = document.getElementById('roleFields');
+            const studentFields = document.getElementById('studentFields');
+            const facultyFields = document.getElementById('facultyFields');
+            const registerButtonText = document.getElementById('registerButtonText');
+            const idField = document.getElementById('idField');
+            const nameFields = document.getElementById('nameFields');
+            const passwordFields = document.getElementById('passwordFields');
+            const idLabel = document.getElementById('idLabel');
+            const idHelperText = document.getElementById('idHelperText');
+            const usernameInput = document.getElementById('username');
+            
+            const selectedRole = roleSelect.value;
+            
+            if (selectedRole === '') {
+                // Hide all fields except role selection
+                roleFields.classList.add('hidden');
+                idField.classList.add('hidden');
+                nameFields.classList.add('hidden');
+                passwordFields.classList.add('hidden');
+                registerButtonText.textContent = 'Select Role First';
+                
+                // Disable button
+                registerBtn.disabled = true;
+                registerBtn.className = 'w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-400 cursor-not-allowed transition duration-200';
+            } else {
+                // Show common fields
+                idField.classList.remove('hidden');
+                nameFields.classList.remove('hidden');
+                passwordFields.classList.remove('hidden');
+                
+                // Enable button
+                registerBtn.disabled = false;
+                registerBtn.className = 'w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600 transition duration-200 transform hover:scale-105 active:scale-95';
+                
+                if (selectedRole === 'student') {
+                    // Show student-specific fields
+                    roleFields.classList.remove('hidden');
+                    studentFields.classList.remove('hidden');
+                    facultyFields.classList.add('hidden');
+                    registerButtonText.textContent = 'Create Student Account';
+                    
+                    // Update ID field for student
+                    idLabel.textContent = 'Student ID';
+                    idHelperText.textContent = 'Enter a unique student ID number';
+                    usernameInput.placeholder = 'e.g., 2025-00123, 22615058';
+                    
+                    // Make student fields required
+                    document.getElementById('year_level').required = true;
+                    document.getElementById('dept_id').required = true;
+                    document.getElementById('course_id').required = true;
+                    document.getElementById('position').required = false;
+                } else if (selectedRole === 'faculty') {
+                    // Show faculty-specific fields
+                    roleFields.classList.remove('hidden');
+                    facultyFields.classList.remove('hidden');
+                    studentFields.classList.add('hidden');
+                    registerButtonText.textContent = 'Create Faculty Account';
+                    
+                    // Update ID field for faculty
+                    idLabel.textContent = 'Faculty ID';
+                    idHelperText.textContent = 'Enter a unique faculty ID number';
+                    usernameInput.placeholder = 'e.g., FAC-001, PROF-123';
+                    
+                    // Make faculty fields required
+                    document.getElementById('faculty_dept_id').required = true;
+                    document.getElementById('position').required = true;
+                    document.getElementById('year_level').required = false;
+                    document.getElementById('course_id').required = false;
+                }
+            }
+        }
+
+        // Update course options based on department selection
+        function updateCourseOptions() {
+            const deptSelect = document.getElementById('dept_id');
+            const courseField = document.getElementById('courseField');
+            const courseSelect = document.getElementById('course_id');
+            const selectedDept = deptSelect.value;
+            
+            // Hide course field if no department selected
+            if (!selectedDept) {
+                courseField.classList.add('hidden');
+                courseSelect.innerHTML = '<option value="">Select Course/Program</option>';
+                return;
+            }
+            
+            // Show course field
+            courseField.classList.remove('hidden');
+            
+            // Define courses for each department based on Philippine educational system
+            const departmentCourses = {
+                '1': [ // CCS - College of Computer Studies
+                    { value: '1', text: 'BSCS - Bachelor of Science in Computer Science' },
+                    { value: '2', text: 'BSIT - Bachelor of Science in Information Technology' },
+                    { value: '3', text: 'BSIS - Bachelor of Science in Information Systems' },
+                    { value: '4', text: 'BSCS (AI) - Bachelor of Science in Computer Science (Artificial Intelligence)' },
+                    { value: '5', text: 'BSCS (SE) - Bachelor of Science in Computer Science (Software Engineering)' }
+                ],
+                '2': [ // COE - College of Engineering
+                    { value: '6', text: 'BSCE - Bachelor of Science in Civil Engineering' },
+                    { value: '7', text: 'BSEE - Bachelor of Science in Electrical Engineering' },
+                    { value: '8', text: 'BSME - Bachelor of Science in Mechanical Engineering' },
+                    { value: '9', text: 'BSIE - Bachelor of Science in Industrial Engineering' },
+                    { value: '10', text: 'BSChE - Bachelor of Science in Chemical Engineering' },
+                    { value: '11', text: 'BSCpE - Bachelor of Science in Computer Engineering' },
+                    { value: '12', text: 'BSECE - Bachelor of Science in Electronics Engineering' },
+                    { value: '13', text: 'BSCE (ST) - Bachelor of Science in Civil Engineering (Structural)' },
+                    { value: '14', text: 'BSCE (WRE) - Bachelor of Science in Civil Engineering (Water Resources)' }
+                ],
+                '3': [ // CBM - College of Business & Management
+                    { value: '15', text: 'BSBA - Bachelor of Science in Business Administration' },
+                    { value: '16', text: 'BSA - Bachelor of Science in Accountancy' },
+                    { value: '17', text: 'BSMA - Bachelor of Science in Management Accounting' },
+                    { value: '18', text: 'BSBA (MKT) - Bachelor of Science in Business Administration (Marketing)' },
+                    { value: '19', text: 'BSBA (FIN) - Bachelor of Science in Business Administration (Finance)' },
+                    { value: '20', text: 'BSBA (HRM) - Bachelor of Science in Business Administration (Human Resource Management)' },
+                    { value: '21', text: 'BSBA (OM) - Bachelor of Science in Business Administration (Operations Management)' },
+                    { value: '22', text: 'BSBA (IB) - Bachelor of Science in Business Administration (International Business)' }
+                ],
+                '4': [ // CAS - College of Arts & Sciences
+                    { value: '23', text: 'BSMATH - Bachelor of Science in Mathematics' },
+                    { value: '24', text: 'BSPSYCH - Bachelor of Science in Psychology' },
+                    { value: '25', text: 'BSBIO - Bachelor of Science in Biology' },
+                    { value: '26', text: 'BSCHEM - Bachelor of Science in Chemistry' },
+                    { value: '27', text: 'BSPHYS - Bachelor of Science in Physics' },
+                    { value: '28', text: 'BSSTAT - Bachelor of Science in Statistics' },
+                    { value: '29', text: 'BSMATH (STAT) - Bachelor of Science in Mathematics (Statistics)' },
+                    { value: '30', text: 'BSPSYCH (CLIN) - Bachelor of Science in Psychology (Clinical)' },
+                    { value: '31', text: 'BSBIO (MB) - Bachelor of Science in Biology (Microbiology)' }
+                ],
+                '5': [ // CON - College of Nursing
+                    { value: '32', text: 'BSN - Bachelor of Science in Nursing' }
+                ],
+                '6': [ // COED - College of Education
+                    { value: '33', text: 'BSE - Bachelor of Secondary Education' },
+                    { value: '34', text: 'BEE - Bachelor of Elementary Education' },
+                    { value: '35', text: 'BSE (MATH) - Bachelor of Secondary Education (Mathematics)' },
+                    { value: '36', text: 'BSE (ENG) - Bachelor of Secondary Education (English)' },
+                    { value: '37', text: 'BSE (SCI) - Bachelor of Secondary Education (Science)' },
+                    { value: '38', text: 'BSE (SOC) - Bachelor of Secondary Education (Social Studies)' },
+                    { value: '39', text: 'BEE (GEN) - Bachelor of Elementary Education (General Education)' },
+                    { value: '40', text: 'BEE (SPED) - Bachelor of Elementary Education (Special Education)' }
+                ],
+                '7': [ // COM - College of Medicine
+                    { value: '41', text: 'MD - Doctor of Medicine' },
+                    { value: '42', text: 'BSPS - Bachelor of Science in Pharmaceutical Sciences' },
+                    { value: '43', text: 'BSMT - Bachelor of Science in Medical Technology' },
+                    { value: '44', text: 'BSRT - Bachelor of Science in Radiologic Technology' }
+                ],
+                '8': [ // COA - College of Architecture
+                    { value: '45', text: 'BSARCH - Bachelor of Science in Architecture' },
+                    { value: '46', text: 'BSID - Bachelor of Science in Interior Design' },
+                    { value: '47', text: 'BSUD - Bachelor of Science in Urban Design' }
+                ],
+                '9': [ // COT - College of Tourism & Hospitality
+                    { value: '48', text: 'BSTM - Bachelor of Science in Tourism Management' },
+                    { value: '49', text: 'BSHM - Bachelor of Science in Hospitality Management' },
+                    { value: '50', text: 'BSTM (TM) - Bachelor of Science in Tourism Management (Travel Management)' },
+                    { value: '51', text: 'BSHM (HRM) - Bachelor of Science in Hospitality Management (Hotel & Restaurant Management)' }
+                ],
+                '10': [ // COC - College of Communication
+                    { value: '52', text: 'BSCOMM - Bachelor of Science in Communication' },
+                    { value: '53', text: 'BSJ - Bachelor of Science in Journalism' },
+                    { value: '54', text: 'BSB - Bachelor of Science in Broadcasting' },
+                    { value: '55', text: 'BSCOMM (PR) - Bachelor of Science in Communication (Public Relations)' }
+                ]
+            };
+            
+            // Clear existing options
+            courseSelect.innerHTML = '<option value="">Select Course/Program</option>';
+            
+            // Add new options based on selected department
+            if (departmentCourses[selectedDept]) {
+                departmentCourses[selectedDept].forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.value;
+                    option.textContent = course.text;
+                    courseSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Form submission handling
+        registrationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate role is selected
+            const selectedRole = document.getElementById('role').value;
+            if (!selectedRole) {
+                showErrorNotification('Please select a role (Student or Faculty) before submitting.');
+                document.getElementById('role').focus();
+                return;
+            }
+            
+            // Validate passwords match
+            if (!validatePasswords()) {
+                showErrorNotification('Please ensure passwords match before submitting.');
+                confirmPasswordField.focus();
+                return;
+            }
+
+            // Show loading state
+            registerBtn.disabled = true;
+            registerBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            registerBtn.classList.remove('hover:scale-105');
+            registerButtonText.textContent = 'Creating Account...';
+            registerLoadingIcon.classList.remove('hidden');
+
+            // Submit the form
+            submitRegistration();
+        });
+
+        // Submit registration function
+        async function submitRegistration() {
+            const formData = new FormData(registrationForm);
+            
+            // Get the selected role and update the form action
+            const selectedRole = document.getElementById('role').value;
+            if (selectedRole) {
+                formData.set('role', selectedRole);
+                
+                // Handle department field based on role
+                if (selectedRole === 'student') {
+                    const studentDeptId = document.getElementById('dept_id').value;
+                    formData.set('dept_id', studentDeptId);
+                } else if (selectedRole === 'faculty') {
+                    const facultyDeptId = document.getElementById('faculty_dept_id').value;
+                    formData.set('dept_id', facultyDeptId);
+                }
+            }
+
+            // Debug: Log form data
+            console.log('🔍 Submitting registration for role:', selectedRole);
+            console.log('📋 Form data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}: ${value}`);
+            }
+
+            try {
+                // Use the role-specific endpoint
+                const url = `/register/${selectedRole}`;
+                console.log('🌐 Sending request to:', url);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', response.headers);
+                
+                const result = await response.json();
+                console.log('📋 Response data:', result);
+
+                if (response.ok && result.success) {
+                    console.log('✅ Registration successful!');
+                    // Show success message and redirect to login
+                    setTimeout(() => {
+                        showSuccessModal(result.message);
+                    }, 500);
+                } else {
+                    console.log('❌ Registration failed:', result.message);
+                    throw new Error(result.message || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('💥 Registration error:', error);
+                showErrorNotification(`Registration failed: ${error.message}\nPlease try again.`);
+                
+                // Reset form state
+                resetFormState();
+            }
+        }
+
+        // Reset form to normal state
+        function resetFormState() {
+            registerBtn.disabled = false;
+            registerBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            registerBtn.classList.add('hover:scale-105');
+            registerButtonText.textContent = registerButtonText.getAttribute('data-original-text') || registerButtonText.textContent;
+            registerLoadingIcon.classList.add('hidden');
+        }
+
+        // Store original button text on load
+        window.addEventListener('load', function() {
+            registerButtonText.setAttribute('data-original-text', registerButtonText.textContent);
+        });
+
+        // Success Modal Functions
+        function showSuccessModal(message) {
+            const modal = document.getElementById('successModal');
+            const modalContent = document.getElementById('successModalContent');
+            const successName = document.getElementById('successName');
+            const successAccountType = document.getElementById('successAccountType');
+            const firstNameField = document.getElementById('firstname');
+            const lastNameField = document.getElementById('lastname');
+            
+            // Determine role from form selection
+            const selectedRole = document.getElementById('role').value;
+            
+            // Update the welcome message with the user's name
+            if (firstNameField && firstNameField.value) {
+                const fullName = firstNameField.value + (lastNameField.value ? ' ' + lastNameField.value : '');
+                successName.textContent = `Welcome ${fullName}!`;
+                if (selectedRole === 'student') {
+                    successAccountType.textContent = 'Your student account has been created successfully.';
+                } else if (selectedRole === 'faculty') {
+                    successAccountType.textContent = 'Your faculty account has been created successfully.';
+                } else {
+                    successAccountType.textContent = 'Your account has been created successfully.';
+                }
+            } else {
+                successName.textContent = message || 'Welcome!';
+                successAccountType.textContent = 'Your account has been created successfully.';
+            }
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            
+            // Animate in
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 50);
+            
+            // Disable body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideSuccessModal() {
+            const modal = document.getElementById('successModal');
+            const modalContent = document.getElementById('successModalContent');
+            
+            // Animate out
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            
+            // Hide modal after animation
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // Handle "Continue to Sign In" button click
+        document.getElementById('proceedToLogin').addEventListener('click', function() {
+            hideSuccessModal();
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 300);
+        });
+
+        // Close modal on background click
+        document.getElementById('successModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideSuccessModal();
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 300);
+            }
+        });
+
+        // Error Modal Functions
+        function showErrorNotification(message) {
+            const modal = document.getElementById('errorModal');
+            const modalContent = document.getElementById('errorModalContent');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Update the error message
+            errorMessage.textContent = message.replace(/\\n/g, ' ');
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            
+            // Animate in
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 50);
+            
+            // Disable body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideErrorModal() {
+            const modal = document.getElementById('errorModal');
+            const modalContent = document.getElementById('errorModalContent');
+            
+            // Animate out
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            
+            // Hide modal after animation
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // Handle error modal dismissal
+        document.getElementById('dismissError').addEventListener('click', function() {
+            hideErrorModal();
+        });
+
+        // Close error modal on background click
+        document.getElementById('errorModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideErrorModal();
+            }
+        });
+
+        // Keyboard support for modals
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const successModal = document.getElementById('successModal');
+                const errorModal = document.getElementById('errorModal');
+                
+                if (!successModal.classList.contains('hidden')) {
+                    hideSuccessModal();
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 300);
+                } else if (!errorModal.classList.contains('hidden')) {
+                    hideErrorModal();
+                }
+            }
+        });
+
+        // Form field validation styling
+        inputs.forEach(input => {
+            input.addEventListener('invalid', function() {
+                this.classList.add('border-red-500');
+            });
+            
+            input.addEventListener('input', function() {
+                if (this.validity.valid) {
+                    this.classList.remove('border-red-500');
+                    this.classList.add('border-gray-500');
+                } else {
+                    this.classList.add('border-red-500');
+                    this.classList.remove('border-gray-500');
+                }
+            });
+        });
+    </script>
+  </body>
+</html>

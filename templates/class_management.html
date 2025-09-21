@@ -146,9 +146,6 @@
                     <button onclick="switchTab('view')" id="tab-view" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
                         View Lists
                     </button>
-                    <button onclick="switchTab('update')" id="tab-update" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                        Update Info
-                    </button>
                 </nav>
             </div>
 
@@ -168,12 +165,6 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Class Code *</label>
                                     <input type="text" id="classCode" required placeholder="e.g., CS101, MATH202" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Course *</label>
-                                    <select id="classCourse" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                                        <option value="">Select Course</option>
-                                    </select>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
@@ -350,10 +341,17 @@
                 <div id="enroll-tab" class="tab-content hidden">
                     <div class="max-w-6xl mx-auto">
                         <h3 class="text-xl font-semibold text-primary-900 mb-6">Enroll Students to Classes</h3>
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <!-- Enrollment Form -->
-                            <div class="bg-gray-50 rounded-lg p-6">
-                                <h4 class="text-lg font-medium text-primary-900 mb-4">Enroll Student</h4>
+                            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                                <div class="flex items-center mb-6">
+                                    <div class="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                        <svg class="h-5 w-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-lg font-medium text-primary-900">Enroll Student</h4>
+                                </div>
                                 <form id="enrollStudentForm" class="space-y-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Select Student *</label>
@@ -371,63 +369,38 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Enrollment Date</label>
                                         <input type="date" id="enrollmentDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     </div>
-                                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-lg font-medium">
+                                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200">
                                         Enroll Student
                                     </button>
                                 </form>
-
-                                <!-- Bulk Enrollment -->
-                                <div class="mt-8 pt-6 border-t border-gray-200">
-                                    <h5 class="text-md font-medium text-primary-900 mb-4">Bulk Enrollment</h5>
-                                    <form id="bulkEnrollForm" class="space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Select Class *</label>
-                                            <select id="bulkEnrollClass" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                                <option value="">Select Class</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Enrollment Criteria</label>
-                                            <select id="enrollmentCriteria" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                                <option value="department">By Department</option>
-                                                <option value="course">By Course</option>
-                                                <option value="year">By Year Level</option>
-                                            </select>
-                                        </div>
-                                        <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium">
-                                            Bulk Enroll
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-
-                            <!-- Search & Filter -->
-                            <div class="bg-gray-50 rounded-lg p-6">
-                                <h4 class="text-lg font-medium text-primary-900 mb-4">Search Students</h4>
-                                <div class="space-y-4">
-                                    <input type="text" id="studentSearch" placeholder="Search by name or ID" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                    <select id="departmentFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">All Departments</option>
-                                    </select>
-                                    <button onclick="searchStudents()" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium">
-                                        Search
-                                    </button>
-                                </div>
-                                <div id="studentResults" class="mt-4 space-y-2 max-h-64 overflow-y-auto">
-                                    <!-- Dynamic content -->
-                                </div>
                             </div>
 
                             <!-- Current Enrollments -->
-                            <div class="bg-gray-50 rounded-lg p-6">
-                                <h4 class="text-lg font-medium text-primary-900 mb-4">Current Enrollments</h4>
-                                <div class="space-y-2">
-                                    <select id="enrollmentClassFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" onchange="filterEnrollments()">
-                                        <option value="">All Classes</option>
-                                    </select>
+                            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                                <div class="flex items-center mb-6">
+                                    <div class="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                        <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-lg font-medium text-primary-900">Current Enrollments</h4>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Class</label>
+                                        <select id="enrollmentClassFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" onchange="filterEnrollments()">
+                                            <option value="">All Classes</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">Total Enrollments: <span id="enrollmentCount" class="font-medium">0</span></span>
+                                        <button onclick="loadCurrentEnrollments()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                            Refresh
+                                        </button>
+                                    </div>
                                 </div>
                                 <div id="currentEnrollments" class="mt-4 space-y-2 max-h-96 overflow-y-auto">
-                                    <!-- Dynamic content -->
+                                    <p class="text-gray-500 text-center py-4">No enrollments found</p>
                                 </div>
                             </div>
                         </div>
@@ -459,10 +432,10 @@
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Code</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Name</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrolled</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
@@ -498,58 +471,6 @@
                     </div>
                 </div>
 
-                <!-- Update Info Tab -->
-                <div id="update-tab" class="tab-content hidden">
-                    <div class="max-w-4xl mx-auto">
-                        <h3 class="text-xl font-semibold text-primary-900 mb-6">Update Class & Event Information</h3>
-                        <div class="space-y-6">
-                            <!-- Selection Area -->
-                            <div class="bg-gray-50 rounded-lg p-6">
-                                <h4 class="text-lg font-medium text-primary-900 mb-4">Select Item to Update</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Update Type</label>
-                                        <select id="updateType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" onchange="loadUpdateOptions()">
-                                            <option value="">Select Type</option>
-                                            <option value="class">Class</option>
-                                            <option value="event">Event</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Item</label>
-                                        <select id="updateItem" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" onchange="loadItemDetails()">
-                                            <option value="">Select Item</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <button onclick="loadItemDetails()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-medium mt-6">
-                                            Load Details
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Update Form -->
-                            <div id="updateForm" class="bg-gray-50 rounded-lg p-6 hidden">
-                                <h4 class="text-lg font-medium text-primary-900 mb-4">Update Information</h4>
-                                <form id="updateDetailsForm" class="space-y-4">
-                                    <input type="hidden" id="updateItemId">
-                                    <div id="updateFields">
-                                        <!-- Dynamic form fields will be inserted here -->
-                                    </div>
-                                    <div class="flex gap-4">
-                                        <button type="submit" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg font-medium">
-                                            Update Information
-                                        </button>
-                                        <button type="button" onclick="cancelUpdate()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 px-4 rounded-lg font-medium">
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -567,6 +488,211 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
+        </div>
+    </div>
+
+    <!-- Edit Assignment Modal -->
+    <div id="editAssignmentModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+            <h3 class="text-xl font-bold text-primary-900 mb-4">Edit Assignment</h3>
+            <form id="editAssignmentForm" class="space-y-4">
+                <input type="hidden" id="editAssignmentId">
+                <input type="hidden" id="editAssignmentType">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Assignment</label>
+                    <input type="text" id="editAssignmentName" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Current Faculty</label>
+                    <input type="text" id="editCurrentFaculty" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Select New Faculty *</label>
+                    <select id="editNewFaculty" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select Faculty Member</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <select id="editNewRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="instructor">Instructor</option>
+                        <option value="assistant">Assistant</option>
+                        <option value="coordinator">Coordinator</option>
+                        <option value="supervisor">Supervisor</option>
+                    </select>
+                </div>
+                
+                <div class="flex gap-3 pt-4 border-t">
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                        Update Assignment
+                    </button>
+                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Class Modal -->
+    <div id="editClassModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Edit Class</h3>
+                            <p class="text-indigo-100 text-xs">Update class information and settings</p>
+                        </div>
+                    </div>
+                    <button onclick="closeEditClassModal()" class="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors duration-200">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <form id="editClassForm" class="space-y-4">
+                    <input type="hidden" id="editClassId">
+                    
+                    <!-- Basic Information Section -->
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-200 pb-3">
+                            <h4 class="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                                <svg class="w-4 h-4 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Basic Information
+                            </h4>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Class Name *</label>
+                                    <input type="text" id="editClassName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 bg-gray-50 focus:bg-white" maxlength="50">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Class Code *</label>
+                                    <input type="text" id="editClassCode" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 bg-gray-50 focus:bg-white" maxlength="20">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Section -->
+                        <div class="border-b border-gray-200 pb-3">
+                            <h4 class="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                                <svg class="w-4 h-4 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Schedule & Location
+                            </h4>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Time *</label>
+                                    <input type="time" id="editClassStartTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 bg-gray-50 focus:bg-white">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">End Time *</label>
+                                    <input type="time" id="editClassEndTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 bg-gray-50 focus:bg-white">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Room *</label>
+                                    <input type="text" id="editClassRoom" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 bg-gray-50 focus:bg-white" maxlength="10" placeholder="e.g., 536">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Days Section -->
+                        <div class="border-b border-gray-200 pb-3">
+                            <h4 class="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                                <svg class="w-4 h-4 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Days of the Week *
+                            </h4>
+                            
+                            <div class="grid grid-cols-7 gap-2">
+                                <label class="flex flex-col items-center p-2 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200">
+                                    <input type="checkbox" value="Monday" class="edit-class-days sr-only">
+                                    <span class="text-xs font-medium text-gray-700">Mon</span>
+                                </label>
+                                <label class="flex flex-col items-center p-2 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200">
+                                    <input type="checkbox" value="Tuesday" class="edit-class-days sr-only">
+                                    <span class="text-xs font-medium text-gray-700">Tue</span>
+                                </label>
+                                <label class="flex flex-col items-center p-2 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200">
+                                    <input type="checkbox" value="Wednesday" class="edit-class-days sr-only">
+                                    <span class="text-xs font-medium text-gray-700">Wed</span>
+                                </label>
+                                <label class="flex flex-col items-center p-2 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200">
+                                    <input type="checkbox" value="Thursday" class="edit-class-days sr-only">
+                                    <span class="text-xs font-medium text-gray-700">Thu</span>
+                                </label>
+                                <label class="flex flex-col items-center p-2 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200">
+                                    <input type="checkbox" value="Friday" class="edit-class-days sr-only">
+                                    <span class="text-xs font-medium text-gray-700">Fri</span>
+                                </label>
+                                <label class="flex flex-col items-center p-2 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200">
+                                    <input type="checkbox" value="Saturday" class="edit-class-days sr-only">
+                                    <span class="text-xs font-medium text-gray-700">Sat</span>
+                                </label>
+                                <label class="flex flex-col items-center p-2 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-200">
+                                    <input type="checkbox" value="Sunday" class="edit-class-days sr-only">
+                                    <span class="text-xs font-medium text-gray-700">Sun</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Status Section -->
+                        <div id="classStatusSection" class="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-xl p-4 border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-white rounded-lg shadow-sm">
+                                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-base font-semibold text-gray-900">Class Status</h4>
+                                        <p class="text-xs text-gray-600">Manage class availability for student enrollment</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <div id="currentStatus" class="px-3 py-1 rounded-full text-sm font-semibold"></div>
+                                    <button type="button" id="statusToggleBtn" onclick="toggleClassStatus()" class="px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                <button type="button" onclick="closeEditClassModal()" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                    Cancel
+                </button>
+                <button type="submit" form="editClassForm" class="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                    Update Class
+                </button>
+            </div>
         </div>
     </div>
 
@@ -595,7 +721,6 @@
             // Load content based on tab
             switch(tabName) {
                 case 'schedule':
-                    loadCourses();
                     break;
                 case 'assign':
                     loadFaculty();
@@ -606,13 +731,11 @@
                 case 'enroll':
                     loadStudents();
                     loadClassesForEnrollment();
-                    loadDepartments();
+                    loadDepartmentsForFilter();
                     loadCurrentEnrollments();
                     break;
                 case 'view':
                     loadClassesAndEvents();
-                    break;
-                case 'update':
                     break;
             }
         }
@@ -649,6 +772,7 @@
         // API helper function
         async function apiCall(url, method = 'GET', data = null) {
             try {
+                console.log(`Making API call to: ${url}`);
                 const config = {
                     method,
                     headers: {
@@ -659,7 +783,10 @@
                     config.body = JSON.stringify(data);
                 }
                 const response = await fetch(url, config);
-                return await response.json();
+                console.log(`API response status: ${response.status}`);
+                const result = await response.json();
+                console.log(`API response data:`, result);
+                return result;
             } catch (error) {
                 console.error('API call failed:', error);
                 return { success: false, message: 'Network error occurred' };
@@ -667,23 +794,36 @@
         }
 
         // Load data functions
-        async function loadCourses() {
+        async function loadDepartments() {
             try {
-                const result = await apiCall('/api/all-courses');
+                console.log('Loading departments...');
+                const result = await apiCall('/api/department-list');
+                console.log('Department API result:', result);
                 if (result.success) {
-                    const courseSelect = document.getElementById('classCourse');
-                    courseSelect.innerHTML = '<option value="">Select Course</option>';
-                    result.courses.forEach(course => {
-                        const option = document.createElement('option');
-                        option.value = course.id;
-                        option.textContent = course.name;
-                        courseSelect.appendChild(option);
-                    });
+                    const deptSelect = document.getElementById('classDepartment');
+                    if (deptSelect) {
+                        deptSelect.innerHTML = '<option value="">Select Department</option>';
+                        result.departments.forEach(dept => {
+                            const option = document.createElement('option');
+                            option.value = dept.id;
+                            option.textContent = dept.name;
+                            deptSelect.appendChild(option);
+                        });
+                        console.log('Departments loaded successfully:', result.departments.length);
+                    } else {
+                        console.error('classDepartment element not found');
+                    }
+                } else {
+                    console.error('Failed to load departments:', result.message);
+                    showToast('Error', result.message || 'Failed to load departments', 'error');
                 }
             } catch (error) {
-                showToast('Error', 'Failed to load courses', 'error');
+                console.error('Error loading departments:', error);
+                showToast('Error', 'Failed to load departments', 'error');
             }
         }
+
+
 
         async function loadFaculty() {
             try {
@@ -762,18 +902,20 @@
             }
         }
 
-        async function loadDepartments() {
+        async function loadDepartmentsForFilter() {
             try {
                 const result = await apiCall('/api/department-list');
                 if (result.success) {
                     const deptSelect = document.getElementById('departmentFilter');
-                    deptSelect.innerHTML = '<option value="">All Departments</option>';
-                    result.departments.forEach(dept => {
-                        const option = document.createElement('option');
-                        option.value = dept.id;
-                        option.textContent = dept.name;
-                        deptSelect.appendChild(option);
-                    });
+                    if (deptSelect) {
+                        deptSelect.innerHTML = '<option value="">All Departments</option>';
+                        result.departments.forEach(dept => {
+                            const option = document.createElement('option');
+                            option.value = dept.id;
+                            option.textContent = dept.name;
+                            deptSelect.appendChild(option);
+                        });
+                    }
                 }
             } catch (error) {
                 showToast('Error', 'Failed to load departments', 'error');
@@ -787,7 +929,6 @@
             const formData = {
                 name: document.getElementById('className').value,
                 code: document.getElementById('classCode').value,
-                course_id: document.getElementById('classCourse').value,
                 start_time: document.getElementById('classStartTime').value,
                 end_time: document.getElementById('classEndTime').value,
                 days: Array.from(document.querySelectorAll('.class-days:checked')).map(cb => cb.value),
@@ -828,6 +969,92 @@
             }
         });
 
+        document.getElementById('assignFacultyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                faculty_id: document.getElementById('assignFaculty').value,
+                assignment_type: document.getElementById('assignmentType').value,
+                class_id: document.getElementById('assignClass').value,
+                event_id: document.getElementById('assignEvent').value,
+                role: document.getElementById('facultyRole').value
+            };
+
+            const result = await apiCall('/api/assign-faculty', 'POST', formData);
+            if (result.success) {
+                showToast('Success', result.message);
+                this.reset();
+                updateStats();
+                loadCurrentAssignments();
+            } else {
+                showToast('Error', result.message || 'Failed to assign faculty', 'error');
+            }
+        });
+
+        document.getElementById('editAssignmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                assignment_type: document.getElementById('editAssignmentType').value,
+                assignment_id: document.getElementById('editAssignmentId').value,
+                new_faculty_id: document.getElementById('editNewFaculty').value,
+                new_role: document.getElementById('editNewRole').value
+            };
+
+            const result = await apiCall('/api/edit-assignment', 'POST', formData);
+            if (result.success) {
+                showToast('Success', result.message);
+                closeEditModal();
+                updateStats();
+                loadCurrentAssignments();
+            } else {
+                showToast('Error', result.message || 'Failed to update assignment', 'error');
+            }
+        });
+
+        document.getElementById('enrollStudentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                student_id: document.getElementById('enrollStudent').value,
+                class_id: document.getElementById('enrollClass').value
+            };
+
+            const result = await apiCall('/api/enroll-student', 'POST', formData);
+            if (result.success) {
+                showToast('Success', result.message);
+                this.reset();
+                updateStats();
+                loadCurrentEnrollments();
+            } else {
+                showToast('Error', result.message || 'Failed to enroll student', 'error');
+            }
+        });
+
+        document.getElementById('editClassForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                id: document.getElementById('editClassId').value,
+                name: document.getElementById('editClassName').value,
+                code: document.getElementById('editClassCode').value,
+                start_time: document.getElementById('editClassStartTime').value,
+                end_time: document.getElementById('editClassEndTime').value,
+                days: Array.from(document.querySelectorAll('.edit-class-days:checked')).map(cb => cb.value),
+                room: document.getElementById('editClassRoom').value
+            };
+
+            const result = await apiCall('/api/update-class', 'POST', formData);
+            if (result.success) {
+                showToast('Success', 'Class updated successfully');
+                closeEditClassModal();
+                loadClassesAndEvents(); // Refresh the view lists
+                updateStats();
+            } else {
+                showToast('Error', result.message || 'Failed to update class', 'error');
+            }
+        });
+
         // Additional helper functions
         function toggleAssignmentOptions() {
             const type = document.getElementById('assignmentType').value;
@@ -848,16 +1075,462 @@
 
         async function updateStats() {
             try {
+                console.log('Updating stats...');
                 const result = await apiCall('/api/class-management-stats');
+                console.log('Stats API result:', result);
                 if (result.success) {
                     document.getElementById('totalClasses').textContent = result.stats.total_classes;
                     document.getElementById('activeEvents').textContent = result.stats.active_events;
                     document.getElementById('enrolledStudents').textContent = result.stats.enrolled_students;
                     document.getElementById('assignedFaculty').textContent = result.stats.assigned_faculty;
+                    console.log('Stats updated:', result.stats);
                 }
             } catch (error) {
                 console.error('Failed to update stats:', error);
             }
+        }
+
+        async function loadCurrentAssignments() {
+            try {
+                const result = await apiCall('/api/current-assignments');
+                if (result.success) {
+                    const container = document.getElementById('currentAssignments');
+                    container.innerHTML = '';
+                    
+                    if (result.assignments.length === 0) {
+                        container.innerHTML = '<p class="text-gray-500 text-center py-4">No assignments found</p>';
+                        return;
+                    }
+                    
+                    result.assignments.forEach(assignment => {
+                        const assignmentDiv = document.createElement('div');
+                        assignmentDiv.className = 'bg-white rounded-lg p-4 border border-gray-200';
+                        
+                        const typeIcon = assignment.type === 'class' ? 
+                            '<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>' :
+                            '<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V5a2 2 0 012-2h4a2 2 0 012 2v2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-2"></path></svg>';
+                        
+                        // Check if faculty is assigned
+                        const hasFaculty = assignment.faculty_name && assignment.faculty_name !== "Unknown Faculty";
+                        const facultyInfo = hasFaculty ? 
+                            `<span class="font-medium">${assignment.faculty_name}</span> - ${assignment.role}` : 
+                            '<span class="text-gray-400 italic">No faculty assigned</span>';
+                        
+                        assignmentDiv.innerHTML = `
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0">
+                                        ${typeIcon}
+                                    </div>
+                                    <div class="flex-1">
+                                        <h5 class="text-sm font-medium text-gray-900">${assignment.name}</h5>
+                                        <p class="text-xs text-gray-500">${assignment.code}</p>
+                                        <p class="text-xs text-gray-600 mt-1">
+                                            ${facultyInfo}
+                                        </p>
+                                        <p class="text-xs text-gray-500">
+                                            ${assignment.room} • ${assignment.time}
+                                            ${assignment.date ? ` • ${assignment.date}` : ''}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex-shrink-0 flex items-center space-x-2">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${assignment.type === 'class' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                                        ${assignment.type === 'class' ? 'Class' : 'Event'}
+                                    </span>
+                                    ${hasFaculty ? 
+                                        `<button onclick="editAssignment(${assignment.id}, '${assignment.type}', '${assignment.faculty_name}', '${assignment.role}')" 
+                                                class="inline-flex items-center px-2 py-1 rounded text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors"
+                                                title="Edit Assignment">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>` :
+                                        `<button onclick="assignFacultyToClass(${assignment.id}, '${assignment.name}', '${assignment.code}')" 
+                                                class="inline-flex items-center px-2 py-1 rounded text-xs font-medium text-green-600 hover:text-green-800 hover:bg-green-50 transition-colors"
+                                                title="Assign Faculty">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                            </svg>
+                                        </button>`
+                                    }
+                                </div>
+                            </div>
+                        `;
+                        
+                        container.appendChild(assignmentDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load current assignments:', error);
+                showToast('Error', 'Failed to load current assignments', 'error');
+            }
+        }
+
+        // Edit assignment functions
+        function editAssignment(assignmentId, assignmentType, currentFaculty, currentRole) {
+            // Set the form data
+            document.getElementById('editAssignmentId').value = assignmentId;
+            document.getElementById('editAssignmentType').value = assignmentType;
+            document.getElementById('editAssignmentName').value = `${assignmentType === 'class' ? 'Class' : 'Event'} Assignment`;
+            document.getElementById('editCurrentFaculty').value = currentFaculty;
+            document.getElementById('editNewRole').value = currentRole.toLowerCase();
+            
+            // Load faculty list for the dropdown
+            loadFacultyForEdit();
+            
+            // Show the modal
+            document.getElementById('editAssignmentModal').classList.remove('hidden');
+        }
+
+        async function loadFacultyForEdit() {
+            try {
+                const result = await apiCall('/api/faculty-list');
+                if (result.success) {
+                    const facultySelect = document.getElementById('editNewFaculty');
+                    facultySelect.innerHTML = '<option value="">Select Faculty Member</option>';
+                    result.faculty.forEach(faculty => {
+                        const option = document.createElement('option');
+                        option.value = faculty.id;
+                        option.textContent = `${faculty.name} (${faculty.id_number})`;
+                        facultySelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load faculty for editing', 'error');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editAssignmentModal').classList.add('hidden');
+            document.getElementById('editAssignmentForm').reset();
+        }
+
+        // Edit class functions
+        async function editClass(classId) {
+            try {
+                console.log('Editing class:', classId);
+                
+                // Get class details
+                const result = await apiCall(`/api/class-details/${classId}`);
+                if (result.success) {
+                    const classData = result.class;
+                    
+                    // Populate the edit form
+                    document.getElementById('editClassId').value = classData.id;
+                    document.getElementById('editClassName').value = classData.name;
+                    document.getElementById('editClassCode').value = classData.code;
+                    document.getElementById('editClassStartTime').value = classData.start_time;
+                    document.getElementById('editClassEndTime').value = classData.end_time;
+                    document.getElementById('editClassRoom').value = classData.room;
+                    
+                    // Set days checkboxes
+                    document.querySelectorAll('.edit-class-days').forEach(checkbox => {
+                        checkbox.checked = classData.days.includes(checkbox.value);
+                        updateDaySelection(checkbox);
+                    });
+                    
+                    // Set status display
+                    updateStatusDisplay(classData.status);
+                    
+                    // Show the modal
+                    document.getElementById('editClassModal').classList.remove('hidden');
+                } else {
+                    showToast('Error', result.message || 'Failed to load class details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading class details:', error);
+                showToast('Error', 'Failed to load class details', 'error');
+            }
+        }
+
+        function updateStatusDisplay(status) {
+            const currentStatusSpan = document.getElementById('currentStatus');
+            const statusToggleBtn = document.getElementById('statusToggleBtn');
+            
+            if (status === 'active') {
+                currentStatusSpan.textContent = 'Active';
+                currentStatusSpan.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 border border-green-200';
+                statusToggleBtn.textContent = 'Deactivate';
+                statusToggleBtn.className = 'px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md bg-red-500 text-white hover:bg-red-600';
+            } else {
+                currentStatusSpan.textContent = 'Deactivated';
+                currentStatusSpan.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800 border border-red-200';
+                statusToggleBtn.textContent = 'Activate';
+                statusToggleBtn.className = 'px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md bg-green-500 text-white hover:bg-green-600';
+            }
+        }
+
+        async function toggleClassStatus() {
+            const classId = document.getElementById('editClassId').value;
+            const currentStatus = document.getElementById('currentStatus').textContent.toLowerCase();
+            const newStatus = currentStatus === 'active' ? 'deactivated' : 'active';
+            
+            try {
+                const result = await apiCall('/api/toggle-class-status', 'POST', {
+                    class_id: classId,
+                    status: newStatus
+                });
+                
+                if (result.success) {
+                    updateStatusDisplay(newStatus);
+                    showToast('Success', `Class ${newStatus} successfully`);
+                    loadClassesAndEvents(); // Refresh the view lists
+                    updateStats();
+                } else {
+                    showToast('Error', result.message || 'Failed to update class status', 'error');
+                }
+            } catch (error) {
+                console.error('Error toggling class status:', error);
+                showToast('Error', 'Failed to update class status', 'error');
+            }
+        }
+
+        function closeEditClassModal() {
+            document.getElementById('editClassModal').classList.add('hidden');
+            document.getElementById('editClassForm').reset();
+        }
+
+        function updateDaySelection(checkbox) {
+            const label = checkbox.closest('label');
+            if (checkbox.checked) {
+                label.classList.add('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+                label.classList.remove('border-gray-200', 'text-gray-700');
+            } else {
+                label.classList.remove('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+                label.classList.add('border-gray-200', 'text-gray-700');
+            }
+        }
+
+        // Add event listeners for day selection
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.edit-class-days').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateDaySelection(this);
+                });
+            });
+        });
+
+        // Quick assign faculty to class function
+        function assignFacultyToClass(classId, className, classCode) {
+            // Pre-fill the assignment form
+            document.getElementById('assignFaculty').value = '';
+            document.getElementById('assignmentType').value = 'class';
+            document.getElementById('assignClass').value = classId;
+            document.getElementById('facultyRole').value = 'instructor';
+            
+            // Show the assignment type options
+            toggleAssignmentOptions();
+            
+            // Switch to the Assign Faculty tab
+            switchTab('assign');
+            
+            // Show a message
+            showToast('Info', `Ready to assign faculty to ${className} (${classCode})`);
+        }
+
+        // Enrollment management functions
+        async function loadCurrentEnrollments() {
+            try {
+                const classFilter = document.getElementById('enrollmentClassFilter').value;
+                const url = classFilter ? `/api/current-enrollments?class_id=${classFilter}` : '/api/current-enrollments';
+                const result = await apiCall(url);
+                
+                if (result.success) {
+                    const container = document.getElementById('currentEnrollments');
+                    const countElement = document.getElementById('enrollmentCount');
+                    
+                    countElement.textContent = result.count;
+                    
+                    if (result.enrollments.length === 0) {
+                        container.innerHTML = '<p class="text-gray-500 text-center py-4">No enrollments found</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = '';
+                    result.enrollments.forEach(enrollment => {
+                        const enrollmentDiv = document.createElement('div');
+                        enrollmentDiv.className = 'bg-gray-50 rounded-lg p-3 border border-gray-200';
+                        enrollmentDiv.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <h6 class="text-sm font-medium text-gray-900">${enrollment.student_name}</h6>
+                                    <p class="text-xs text-gray-500">ID: ${enrollment.student_idno} • ${enrollment.year_level}</p>
+                                    <p class="text-xs text-gray-600">${enrollment.class_name} (${enrollment.class_code})</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Enrolled
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(enrollmentDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load enrollments:', error);
+                showToast('Error', 'Failed to load enrollments', 'error');
+            }
+        }
+
+        function filterEnrollments() {
+            loadCurrentEnrollments();
+        }
+
+        // View lists functions
+        async function loadClassesAndEvents() {
+            await loadClassesList();
+            await loadEventsList();
+        }
+
+        async function loadClassesList() {
+            try {
+                console.log('Loading classes list...');
+                const result = await apiCall('/api/classes-detailed');
+                console.log('Classes API result:', result);
+                if (result.success) {
+                    const tbody = document.getElementById('classesTableBody');
+                    tbody.innerHTML = '';
+                    
+                    console.log('Classes found:', result.classes.length);
+                    if (result.classes.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No classes found</td></tr>';
+                        return;
+                    }
+                    
+                    result.classes.forEach(cls => {
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-50';
+                        const statusBadge = cls.status === 'active' 
+                            ? '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Active</span>'
+                            : '<span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Deactivated</span>';
+                        
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${cls.code}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${cls.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.schedule}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.instructor}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.enrolled}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${statusBadge}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <div class="flex items-center justify-center">
+                                    <button onclick="editClass(${cls.id})" class="text-indigo-600 hover:text-indigo-900 p-2 rounded hover:bg-indigo-50" title="Edit Class">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load classes:', error);
+                showToast('Error', 'Failed to load classes', 'error');
+            }
+        }
+
+        async function loadEventsList() {
+            try {
+                const result = await apiCall('/api/events-detailed');
+                if (result.success) {
+                    const tbody = document.getElementById('eventsTableBody');
+                    tbody.innerHTML = '';
+                    
+                    if (result.events.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No events found</td></tr>';
+                        return;
+                    }
+                    
+                    result.events.forEach(event => {
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-50';
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${event.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${event.type}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${event.date_time}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${event.location}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${event.organizer}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${event.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                    ${event.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <button onclick="editEvent(${event.id})" class="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50" title="Edit Event">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="deleteEvent(${event.id})" class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50" title="Delete Event">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load events:', error);
+                showToast('Error', 'Failed to load events', 'error');
+            }
+        }
+
+        // Event edit/delete functions
+        function editEvent(eventId) {
+            showToast('Info', `Edit event ${eventId} - Feature coming soon`);
+        }
+
+        function deleteEvent(eventId) {
+            if (confirm('Are you sure you want to delete this event?')) {
+                showToast('Info', `Delete event ${eventId} - Feature coming soon`);
+            }
+        }
+
+        // Filter and search functions
+        function applyViewFilter() {
+            const filter = document.getElementById('viewFilter').value;
+            const search = document.getElementById('searchFilter').value.toLowerCase();
+            
+            // Show/hide sections based on filter
+            const classesList = document.getElementById('classesList');
+            const eventsList = document.getElementById('eventsList');
+            
+            if (filter === 'classes') {
+                classesList.style.display = 'block';
+                eventsList.style.display = 'none';
+            } else if (filter === 'events') {
+                classesList.style.display = 'none';
+                eventsList.style.display = 'block';
+            } else {
+                classesList.style.display = 'block';
+                eventsList.style.display = 'block';
+            }
+            
+            // Apply search filter
+            filterTableRows('classesTableBody', search);
+            filterTableRows('eventsTableBody', search);
+        }
+
+        function filterTableRows(tableBodyId, searchTerm) {
+            const tbody = document.getElementById(tableBodyId);
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
 
         // Initialize page
@@ -868,8 +1541,15 @@
             document.getElementById('enrollmentDate').value = today;
             
             // Load initial data
-            loadCourses();
+            loadFaculty();
+            loadClasses();
+            loadEvents();
+            loadStudents();
+            loadCurrentAssignments();
+            loadCurrentEnrollments();
+            loadClassesAndEvents(); // Load view lists data
             updateStats();
+            
             showToast('Module Loaded', 'Class & Event Management Module is ready');
         });
     </script>

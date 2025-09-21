@@ -110,7 +110,8 @@ class Class(db.Model):
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
     room = db.Column(db.String(10), nullable=False)
-    faculty_id = db.Column(db.Integer, db.ForeignKey('faculty.faculty_id'), nullable=False)
+    faculty_id = db.Column(db.Integer, db.ForeignKey('faculty.faculty_id'), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='active')
     
     # Relationships
     class_days = db.relationship('ClassDay', backref='class', lazy=True)
@@ -225,8 +226,8 @@ def train_lbph():
 # --- Routes ---
 @app.route("/")
 def index():
-    # Welcome page -> role selection first
-    return render_template("role_selection.html")
+    # Redirect directly to login page
+    return redirect(url_for("login"))
 
 @app.route("/admin/users")
 def admin_users_page():
@@ -619,7 +620,7 @@ def get_all_courses():
     
     try:
         courses = Course.query.all()
-        courses_data = [{"id": c.course_id, "name": c.course_name} for c in courses]
+        courses_data = [{"id": c.course_id, "name": c.course_name, "department_id": c.dept_id} for c in courses]
         return jsonify({"success": True, "courses": courses_data})
     except Exception as e:
         return jsonify({"success": False, "message": f"Error fetching courses: {e}"}), 500
@@ -644,7 +645,7 @@ def create_class():
         days = data.get("days", [])
         room = (data.get("room") or "").strip()
         
-        if not all([class_name, class_code, course_id, start_time, end_time]):
+        if not all([class_name, class_code, start_time, end_time]):
             return jsonify({"success": False, "message": "All required fields must be provided"}), 400
         
         # Check if EDP code already exists
@@ -663,7 +664,7 @@ def create_class():
             start_time=start_time_obj,
             end_time=end_time_obj,
             room=room,
-            faculty_id=1  # Temporary - will be assigned later through faculty assignment
+            faculty_id=None  # No faculty assigned initially - must be assigned manually
         )
         
         db.session.add(new_class)
@@ -840,6 +841,14 @@ def enroll_student():
         if not student:
             return jsonify({"success": False, "message": "Student record not found"}), 404
         
+        # Check if class is active
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return jsonify({"success": False, "message": "Class not found"}), 404
+        
+        if class_obj.status != 'active':
+            return jsonify({"success": False, "message": "Cannot enroll students in deactivated classes"}), 400
+        
         # Check if student is already enrolled
         existing = StudentClass.query.filter_by(
             student_id=student.student_id,
@@ -867,6 +876,122 @@ def enroll_student():
         db.session.rollback()
         return jsonify({"success": False, "message": f"Error enrolling student: {e}"}), 500
 
+@app.route("/api/current-enrollments", methods=["GET"])
+def get_current_enrollments():
+    """Get current student enrollments"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        class_filter = request.args.get("class_id")
+        
+        # Build query
+        query = db.session.query(StudentClass, Class, Student, User).join(
+            Class, StudentClass.class_id == Class.class_id
+        ).join(
+            Student, StudentClass.student_id == Student.student_id
+        ).join(
+            User, Student.user_id == User.user_id
+        )
+        
+        if class_filter:
+            query = query.filter(StudentClass.class_id == class_filter)
+        
+        enrollments = query.all()
+        
+        enrollment_data = []
+        for student_class, class_obj, student, user in enrollments:
+            enrollment_data.append({
+                "enrollment_id": student_class.studentclass_id,
+                "class_id": class_obj.class_id,
+                "class_name": class_obj.class_name,
+                "class_code": class_obj.edpcode,
+                "student_id": student.student_id,
+                "student_name": user.full_name,
+                "student_idno": user.idno,
+                "year_level": student.year_level,
+                "course_name": student.course.course_name if student.course else "Unknown"
+            })
+        
+        return jsonify({
+            "success": True,
+            "enrollments": enrollment_data,
+            "count": len(enrollment_data)
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching enrollments: {e}"}), 500
+
+@app.route("/api/classes-detailed", methods=["GET"])
+def get_classes_detailed():
+    """Get detailed classes data for view lists"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        # Get classes with faculty and enrollment information
+        classes = db.session.query(Class, Faculty, User).outerjoin(
+            Faculty, Class.faculty_id == Faculty.faculty_id
+        ).outerjoin(
+            User, Faculty.user_id == User.user_id
+        ).all()
+        
+        classes_data = []
+        for class_obj, faculty, user in classes:
+            # Get enrollment count
+            enrollment_count = StudentClass.query.filter_by(class_id=class_obj.class_id).count()
+            
+            classes_data.append({
+                "id": class_obj.class_id,
+                "code": class_obj.edpcode,
+                "name": class_obj.class_name,
+                "schedule": f"{class_obj.start_time.strftime('%H:%M')} - {class_obj.end_time.strftime('%H:%M')}",
+                "room": class_obj.room,
+                "instructor": user.full_name if user else "Not Assigned",
+                "enrolled": enrollment_count,
+                "status": class_obj.status
+            })
+        
+        return jsonify({"success": True, "classes": classes_data})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching classes: {e}"}), 500
+
+@app.route("/api/events-detailed", methods=["GET"])
+def get_events_detailed():
+    """Get detailed events data for view lists"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        # Get events with faculty information
+        events = db.session.query(Event, Faculty, User).outerjoin(
+            Faculty, Event.faculty_id == Faculty.faculty_id
+        ).outerjoin(
+            User, Faculty.user_id == User.user_id
+        ).all()
+        
+        events_data = []
+        for event_obj, faculty, user in events:
+            events_data.append({
+                "id": event_obj.event_id,
+                "name": event_obj.event_name,
+                "type": getattr(event_obj, 'event_type', 'General'),
+                "date_time": f"{event_obj.event_date.strftime('%Y-%m-%d')} {event_obj.start_time.strftime('%H:%M')} - {event_obj.end_time.strftime('%H:%M')}",
+                "location": getattr(event_obj, 'room', 'TBD'),
+                "organizer": user.full_name if user else "Not Assigned",
+                "status": "Active" if event_obj.event_date >= datetime.now().date() else "Completed"
+            })
+        
+        return jsonify({"success": True, "events": events_data})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching events: {e}"}), 500
+
 @app.route("/api/class-management-stats", methods=["GET"])
 def get_class_management_stats():
     """Get statistics for class management dashboard"""
@@ -875,9 +1000,9 @@ def get_class_management_stats():
     
     try:
         total_classes = Class.query.count()
-        active_events = 0  # Will be implemented when Event model is added
+        active_events = Event.query.count()
         enrolled_students = StudentClass.query.count()
-        assigned_faculty = 0  # Will be implemented when Faculty assignment is added
+        assigned_faculty = Class.query.filter(Class.faculty_id.isnot(None)).count()
         
         stats = {
             "total_classes": total_classes,
@@ -890,6 +1015,346 @@ def get_class_management_stats():
         
     except Exception as e:
         return jsonify({"success": False, "message": f"Error fetching stats: {e}"}), 500
+
+@app.route("/api/class-details/<int:class_id>", methods=["GET"])
+def get_class_details(class_id):
+    """Get detailed information about a specific class"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    try:
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return jsonify({"success": False, "message": "Class not found"}), 404
+        
+        # Get class days
+        class_days = ClassDay.query.filter_by(class_id=class_id).all()
+        days = [day.day.day_name for day in class_days]
+        
+        # Format times for frontend
+        start_time = class_obj.start_time.strftime('%H:%M')
+        end_time = class_obj.end_time.strftime('%H:%M')
+        
+        class_data = {
+            "id": class_obj.class_id,
+            "name": class_obj.class_name,
+            "code": class_obj.edpcode,
+            "start_time": start_time,
+            "end_time": end_time,
+            "room": class_obj.room,
+            "days": days,
+            "status": class_obj.status
+        }
+        
+        return jsonify({"success": True, "class": class_data})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching class details: {e}"}), 500
+
+@app.route("/api/update-class", methods=["POST"])
+def update_class():
+    """Update an existing class"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        data = request.get_json()
+        class_id = data.get("id")
+        class_name = (data.get("name") or "").strip()
+        class_code = (data.get("code") or "").strip()
+        start_time = data.get("start_time")
+        end_time = data.get("end_time")
+        days = data.get("days", [])
+        room = (data.get("room") or "").strip()
+        
+        if not all([class_id, class_name, class_code, start_time, end_time, room]):
+            return jsonify({"success": False, "message": "All required fields must be provided"}), 400
+        
+        # Get the class to update
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return jsonify({"success": False, "message": "Class not found"}), 404
+        
+        # Check if EDP code already exists (excluding current class)
+        existing_class = Class.query.filter(Class.edpcode == class_code, Class.class_id != class_id).first()
+        if existing_class:
+            return jsonify({"success": False, "message": "Class code already exists"}), 400
+        
+        # Parse time strings to time objects
+        start_time_obj = datetime.strptime(start_time, "%H:%M").time()
+        end_time_obj = datetime.strptime(end_time, "%H:%M").time()
+        
+        # Update class information
+        class_obj.class_name = class_name
+        class_obj.edpcode = class_code
+        class_obj.start_time = start_time_obj
+        class_obj.end_time = end_time_obj
+        class_obj.room = room
+        
+        # Update class days
+        # First, remove existing class days
+        ClassDay.query.filter_by(class_id=class_id).delete()
+        
+        # Add new class days
+        for day_name in days:
+            day_obj = Day.query.filter_by(day_name=day_name).first()
+            if day_obj:
+                class_day = ClassDay(class_id=class_id, day_id=day_obj.day_id)
+                db.session.add(class_day)
+        
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Class '{class_name}' updated successfully"
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error updating class: {e}"}), 500
+
+@app.route("/api/toggle-class-status", methods=["POST"])
+def toggle_class_status():
+    """Toggle class status between active and deactivated"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        data = request.get_json()
+        class_id = data.get("class_id")
+        status = data.get("status")
+        
+        if not class_id or not status:
+            return jsonify({"success": False, "message": "Class ID and status are required"}), 400
+        
+        if status not in ['active', 'deactivated']:
+            return jsonify({"success": False, "message": "Invalid status. Must be 'active' or 'deactivated'"}), 400
+        
+        # Get the class to update
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return jsonify({"success": False, "message": "Class not found"}), 404
+        
+        # Update class status
+        class_obj.status = status
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": f"Class '{class_obj.class_name}' {status} successfully"
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error updating class status: {e}"}), 500
+
+@app.route("/api/assign-faculty", methods=["POST"])
+def assign_faculty():
+    """Assign faculty to a class or event"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    user_role = session.get("role")
+    if user_role not in ["admin"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        data = request.get_json()
+        faculty_user_id = data.get("faculty_id")  # This is actually user_id from frontend
+        assignment_type = data.get("assignment_type")  # "class" or "event"
+        class_id = data.get("class_id")
+        event_id = data.get("event_id")
+        role = data.get("role", "instructor")
+        
+        if not all([faculty_user_id, assignment_type]):
+            return jsonify({"success": False, "message": "Faculty ID and assignment type required"}), 400
+        
+        # Get faculty record using user_id
+        faculty = Faculty.query.filter_by(user_id=faculty_user_id).first()
+        if not faculty:
+            return jsonify({"success": False, "message": "Faculty not found"}), 404
+        
+        if assignment_type == "class":
+            if not class_id:
+                return jsonify({"success": False, "message": "Class ID required for class assignment"}), 400
+            
+            # Update class with faculty assignment
+            class_obj = Class.query.get(class_id)
+            if not class_obj:
+                return jsonify({"success": False, "message": "Class not found"}), 404
+            
+            class_obj.faculty_id = faculty.faculty_id
+            db.session.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": f"Faculty {faculty.user.full_name} assigned to class {class_obj.class_name} as {role}"
+            })
+            
+        elif assignment_type == "event":
+            if not event_id:
+                return jsonify({"success": False, "message": "Event ID required for event assignment"}), 400
+            
+            # Update event with faculty assignment
+            event_obj = Event.query.get(event_id)
+            if not event_obj:
+                return jsonify({"success": False, "message": "Event not found"}), 404
+            
+            event_obj.faculty_id = faculty.faculty_id
+            db.session.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": f"Faculty {faculty.user.full_name} assigned to event {event_obj.event_name} as {role}"
+            })
+        
+        else:
+            return jsonify({"success": False, "message": "Invalid assignment type"}), 400
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error assigning faculty: {e}"}), 500
+
+@app.route("/api/current-assignments", methods=["GET"])
+def get_current_assignments():
+    """Get current faculty assignments"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    user_role = session.get("role")
+    if user_role not in ["admin", "faculty"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        assignments = []
+        
+        # Get all classes (both assigned and unassigned)
+        all_classes = Class.query.all()
+        
+        for class_obj in all_classes:
+            if class_obj.faculty_id:
+                # Class has faculty assigned
+                faculty = Faculty.query.get(class_obj.faculty_id)
+                if faculty:
+                    user = User.query.get(faculty.user_id)
+                    faculty_name = user.full_name if user else "Unknown Faculty"
+                    faculty_id = faculty.faculty_id
+                else:
+                    faculty_name = "Unknown Faculty"
+                    faculty_id = None
+            else:
+                # Class has no faculty assigned
+                faculty_name = None
+                faculty_id = None
+            
+            assignments.append({
+                "type": "class",
+                "id": class_obj.class_id,
+                "name": class_obj.class_name,
+                "code": class_obj.edpcode,
+                "faculty_id": faculty_id,
+                "faculty_name": faculty_name,
+                "role": "Instructor" if faculty_name else None,
+                "room": class_obj.room,
+                "time": f"{class_obj.start_time.strftime('%H:%M')} - {class_obj.end_time.strftime('%H:%M')}"
+            })
+        
+        # Get event assignments
+        event_assignments = db.session.query(Event, Faculty, User).join(
+            Faculty, Event.faculty_id == Faculty.faculty_id
+        ).join(
+            User, Faculty.user_id == User.user_id
+        ).all()
+        
+        for event_obj, faculty, user in event_assignments:
+            assignments.append({
+                "type": "event",
+                "id": event_obj.event_id,
+                "name": event_obj.event_name,
+                "code": event_obj.event_name,
+                "faculty_id": faculty.faculty_id,
+                "faculty_name": user.full_name,
+                "role": "Instructor",
+                "room": event_obj.room,
+                "time": f"{event_obj.start_time.strftime('%H:%M')} - {event_obj.end_time.strftime('%H:%M')}",
+                "date": event_obj.event_date.strftime('%Y-%m-%d')
+            })
+        
+        return jsonify({
+            "success": True,
+            "assignments": assignments
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error fetching assignments: {e}"}), 500
+
+@app.route("/api/edit-assignment", methods=["POST"])
+def edit_assignment():
+    """Edit faculty assignment for a class or event"""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    user_role = session.get("role")
+    if user_role not in ["admin"]:
+        return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+    
+    try:
+        data = request.get_json()
+        assignment_type = data.get("assignment_type")  # "class" or "event"
+        assignment_id = data.get("assignment_id")
+        new_faculty_user_id = data.get("new_faculty_id")
+        new_role = data.get("new_role", "instructor")
+        
+        if not all([assignment_type, assignment_id, new_faculty_user_id]):
+            return jsonify({"success": False, "message": "Assignment type, ID, and new faculty required"}), 400
+        
+        # Get new faculty record using user_id
+        new_faculty = Faculty.query.filter_by(user_id=new_faculty_user_id).first()
+        if not new_faculty:
+            return jsonify({"success": False, "message": "New faculty not found"}), 404
+        
+        if assignment_type == "class":
+            # Update class assignment
+            class_obj = Class.query.get(assignment_id)
+            if not class_obj:
+                return jsonify({"success": False, "message": "Class not found"}), 404
+            
+            class_obj.faculty_id = new_faculty.faculty_id
+            db.session.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": f"Class {class_obj.class_name} reassigned to {new_faculty.user.full_name} as {new_role}"
+            })
+            
+        elif assignment_type == "event":
+            # Update event assignment
+            event_obj = Event.query.get(assignment_id)
+            if not event_obj:
+                return jsonify({"success": False, "message": "Event not found"}), 404
+            
+            event_obj.faculty_id = new_faculty.faculty_id
+            db.session.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": f"Event {event_obj.event_name} reassigned to {new_faculty.user.full_name} as {new_role}"
+            })
+        
+        else:
+            return jsonify({"success": False, "message": "Invalid assignment type"}), 400
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error editing assignment: {e}"}), 500
 
 @app.route("/reports-analytics")
 def reports_analytics_module():
