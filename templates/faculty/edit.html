@@ -22,9 +22,24 @@
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold text-primary-900">Edit Attendance Records</h2>
-                <button onclick="showEditExportOptions()" class="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm">
-                    Export Data
-                </button>
+                <div class="flex gap-2 items-center">
+                    <form id="editFilterForm" method="get" action="/attendance/filter" class="flex gap-2 items-center">
+                        <select id="editFilterType" name="type" onchange="onEditFilterTypeChange()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="class">Class</option>
+                            <option value="event">Event</option>
+                        </select>
+                        <input id="editClassInput" name="class" placeholder="Class code (e.g., CS101)" class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        <select id="editEventSelect" name="event_id" class="px-3 py-2 border border-gray-300 rounded-lg text-sm hidden">
+                            <option value="">Select event</option>
+                        </select>
+                        <input type="date" name="start_date" class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        <input type="date" name="end_date" class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        <button type="submit" class="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm">Filter</button>
+                    </form>
+                    <button onclick="showEditExportOptions()" class="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm">
+                        Export Data
+                    </button>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -110,9 +125,50 @@
         }
 
         function exportEditToCSV() {
-            window.location.href = '/attendance/edit/export/csv';
+            const params = new URLSearchParams(document.getElementById('editFilterForm')?.elements);
+            const query = params ? params.toString() : '';
+            window.location.href = '/attendance/edit/export/csv' + (query ? ('?' + query) : '');
             closeEditExportModal();
         }
+    </script>
+    <script>
+        function onEditFilterTypeChange() {
+            const t = document.getElementById('editFilterType').value;
+            const classInput = document.getElementById('editClassInput');
+            const eventSelect = document.getElementById('editEventSelect');
+            if (t === 'event') {
+                classInput.classList.add('hidden');
+                classInput.disabled = true;
+                eventSelect.classList.remove('hidden');
+                eventSelect.disabled = false;
+            } else {
+                classInput.classList.remove('hidden');
+                classInput.disabled = false;
+                eventSelect.classList.add('hidden');
+                eventSelect.disabled = true;
+            }
+        }
+
+        async function loadEditEvents(){
+            try{
+                const res = await fetch('/api/events-detailed');
+                if(!res.ok) return;
+                const data = await res.json();
+                const events = data.events || [];
+                const sel = document.getElementById('editEventSelect');
+                events.forEach(e=>{
+                    const opt = document.createElement('option');
+                    opt.value = e.id;
+                    opt.textContent = `${e.name} — ${e.date_time.split(' ')[0]}`;
+                    sel.appendChild(opt);
+                });
+            }catch(e){console.error('Failed to load events', e)}
+        }
+
+        (function initEditPage(){
+            onEditFilterTypeChange();
+            loadEditEvents();
+        })();
     </script>
 </body>
 </html>

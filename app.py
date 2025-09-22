@@ -785,6 +785,7 @@ def get_class_list():
     except Exception as e:
         return jsonify({"success": False, "message": f"Error fetching classes: {e}"}), 500
 
+
 @app.route("/api/event-list", methods=["GET"])
 def get_event_list():
     """Get list of events"""
@@ -1884,6 +1885,21 @@ def capture(class_code):
 
     # create recognizer and load model
     try:
+        # Ensure the contrib face module is available
+        if not hasattr(cv2, 'face'):
+            help_html = f"""
+            <html><body>
+            <h2>OpenCV LBPH not available</h2>
+            <p>Your Python OpenCV build does not include the contrib modules (cv2.face).
+            Install the contrib wheel and restart the server. Example commands:</p>
+            <pre>
+pip uninstall -y opencv-python opencv-contrib-python opencv-python-headless opencv-contrib-python-headless
+pip install opencv-contrib-python
+            </pre>
+            <p>On a headless server, use <code>opencv-contrib-python-headless</code> instead of the non-headless package.</p>
+            </body></html>
+            """
+            return help_html, 500
         recognizer = cv2.face.LBPHFaceRecognizer_create()
         recognizer.read(mpath)
     except Exception as e:
@@ -2076,7 +2092,40 @@ def attendance_filter():
     class_code = request.args.get("class", "").strip()
     start_date = request.args.get("start_date", "").strip()
     end_date = request.args.get("end_date", "").strip()
+    #filtering of events/classes in faculty attendance page
+    event_id = request.args.get("event_id", "").strip()
+    filter_type = request.args.get("type", "class").strip()
 
+    # If filtering for events, query EventAttendance
+    if filter_type == 'event' and event_id:
+        try:
+            eid = int(event_id)
+        except Exception:
+            eid = None
+        qev = (
+            db.session.query(EventAttendance, Event, User)
+            .join(Event, EventAttendance.event_id == Event.event_id)
+            .join(User, EventAttendance.user_id == User.user_id)
+        )
+        if eid:
+            qev = qev.filter(Event.event_id == eid)
+        if start_date:
+            try:
+                dt = datetime.fromisoformat(start_date)
+                qev = qev.filter(EventAttendance.attendance_time >= dt)
+            except Exception:
+                pass
+        if end_date:
+            try:
+                dt2 = datetime.fromisoformat(end_date)
+                qev = qev.filter(EventAttendance.attendance_time <= dt2)
+            except Exception:
+                pass
+        qev = qev.order_by(EventAttendance.attendance_time.desc()).limit(1000)
+        records = qev.all()
+        return render_template("faculty/filter_event.html", records=records, event_id=event_id, start_date=start_date, end_date=end_date)
+
+    # Default: class attendance filtering
     q = (
         db.session.query(Attendance, StudentClass, Class, Student, User)
         .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
@@ -2117,16 +2166,66 @@ def attendance_edit():
         return redirect(url_for("attendance_edit"))
 
     # GET
-    records = (
+    # Support optional filters similar to the logs page
+    filter_type = request.args.get('type', 'class').strip()
+    class_code = request.args.get('class', '').strip()
+    start_date = request.args.get('start_date', '').strip()
+    end_date = request.args.get('end_date', '').strip()
+    event_id = request.args.get('event_id', '').strip()
+
+    # If event filtering requested
+    if filter_type == 'event' and event_id:
+        try:
+            eid = int(event_id)
+        except Exception:
+            eid = None
+        qev = (
+            db.session.query(EventAttendance, Event, User)
+            .join(Event, EventAttendance.event_id == Event.event_id)
+            .join(User, EventAttendance.user_id == User.user_id)
+        )
+        if eid:
+            qev = qev.filter(Event.event_id == eid)
+        if start_date:
+            try:
+                dt = datetime.fromisoformat(start_date)
+                qev = qev.filter(EventAttendance.attendance_time >= dt)
+            except Exception:
+                pass
+        if end_date:
+            try:
+                dt2 = datetime.fromisoformat(end_date)
+                qev = qev.filter(EventAttendance.attendance_time <= dt2)
+            except Exception:
+                pass
+        qev = qev.order_by(EventAttendance.attendance_time.desc()).limit(1000)
+        records = qev.all()
+        return render_template('faculty/filter_event.html', records=records, event_id=event_id, start_date=start_date, end_date=end_date)
+
+    # Default: class attendance (possibly with filters)
+    q = (
         db.session.query(Attendance, StudentClass, Class, Student, User)
         .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
         .join(Class, StudentClass.class_id == Class.class_id)
         .join(Student, StudentClass.student_id == Student.student_id)
         .join(User, Student.user_id == User.user_id)
-        .order_by(Attendance.attendance_date.desc())
-        .limit(200)
-        .all()
     )
+    if class_code:
+        q = q.filter(Class.edpcode == class_code)
+    if start_date:
+        try:
+            dt = datetime.fromisoformat(start_date)
+            q = q.filter(Attendance.attendance_date >= dt)
+        except Exception:
+            pass
+    if end_date:
+        try:
+            dt2 = datetime.fromisoformat(end_date)
+            q = q.filter(Attendance.attendance_date <= dt2)
+        except Exception:
+            pass
+    q = q.order_by(Attendance.attendance_date.desc()).limit(200)
+    records = q.all()
     return render_template("faculty/edit.html", records=records)
 
 
@@ -2198,7 +2297,29 @@ def export_attendance_excel():
 def export_logs_csv():
     import csv
     from flask import Response
+    # honor optional filters passed from the logs page
+    class_code = request.args.get("class", "").strip()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+    event_id = request.args.get("event_id", "").strip()
+    filter_type = request.args.get("type", "class").strip()
 
+    if filter_type == 'event' and event_id:
+        # export event attendances
+        try:
+            eid = int(event_id)
+        except Exception:
+            eid = None
+        rows = []
+        if eid:
+            rows = db.session.query(EventAttendance, Event, User).join(Event, EventAttendance.event_id == Event.event_id).join(User, EventAttendance.user_id == User.user_id).filter(Event.event_id == eid).order_by(EventAttendance.attendance_time.desc()).limit(1000).all()
+        def generate_event():
+            yield "event_attend_id,attendance_time,status,event_id,event_name,user_id,user_name\n"
+            for ea, ev, usr in rows:
+                yield f"{ea.event_attend_id},{ea.attendance_time.isoformat()},{ea.status},{ev.event_id},{ev.event_name},{usr.user_id},{usr.firstname} {usr.lastname}\n"
+        return Response(generate_event(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=event_attendance.csv"})
+
+    # default: attendance records
     rows = _attendance_query_for_export().limit(200).all()
     def generate():
         yield "attendance_id,attendance_date,status,class_code,class_name,student_id,student_name\n"
@@ -2285,8 +2406,45 @@ def export_filter_excel():
 def export_edit_csv():
     import csv
     from flask import Response
+    # honor optional filters
+    class_code = request.args.get("class", "").strip()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+    event_id = request.args.get("event_id", "").strip()
+    filter_type = request.args.get("type", "class").strip()
 
-    rows = _attendance_query_for_export().limit(200).all()
+    if filter_type == 'event' and event_id:
+        try:
+            eid = int(event_id)
+        except Exception:
+            eid = None
+        rows = []
+        if eid:
+            rows = db.session.query(EventAttendance, Event, User).join(Event, EventAttendance.event_id == Event.event_id).join(User, EventAttendance.user_id == User.user_id).filter(Event.event_id == eid).order_by(EventAttendance.attendance_time.desc()).limit(1000).all()
+        def generate_event():
+            yield "event_attend_id,attendance_time,status,event_id,event_name,user_id,user_name\n"
+            for ea, ev, usr in rows:
+                yield f"{ea.event_attend_id},{ea.attendance_time.isoformat()},{ea.status},{ev.event_id},{ev.event_name},{usr.user_id},{usr.firstname} {usr.lastname}\n"
+        return Response(generate_event(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=event_attendance.csv"})
+
+    # default: attendance records, possibly filtered
+    q = _attendance_query_for_export()
+    if class_code:
+        q = q.filter(Class.edpcode == class_code)
+    if start_date:
+        try:
+            dt = datetime.fromisoformat(start_date)
+            q = q.filter(Attendance.attendance_date >= dt)
+        except Exception:
+            pass
+    if end_date:
+        try:
+            dt2 = datetime.fromisoformat(end_date)
+            q = q.filter(Attendance.attendance_date <= dt2)
+        except Exception:
+            pass
+    rows = q.limit(200).all()
+
     def generate():
         yield "attendance_id,attendance_date,status,class_code,class_name,student_id,student_name\n"
         for att, sc, clz, stu, usr in rows:

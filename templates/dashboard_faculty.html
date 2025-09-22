@@ -157,7 +157,7 @@
             <h3 class="text-2xl font-bold text-primary-900 mb-6">Attendance Management</h3>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Attendance Monitoring -->
-                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div id="attendancePanel" class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                     <div class="flex items-center mb-4">
                         <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,6 +180,28 @@
                         <a class="bg-pink-600 hover:bg-pink-700 text-white py-2 px-3 rounded-lg font-medium transition-colors duration-200 text-sm text-center inline-block" href="/classes/events">
                             Class & Events
                         </a>
+                    </div>
+
+                    <!-- Live Attendance UI (hidden until started) -->
+                    <div id="liveAttendanceUI" class="mt-6 hidden">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-primary-600 mb-2">Class:</label>
+                            <div id="liveClassCode" class="text-primary-900 font-semibold"></div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div>
+                                <div class="mb-2 text-sm text-primary-600">Camera Preview</div>
+                                <video id="cameraVideo" autoplay playsinline class="w-full rounded-lg border border-gray-200 bg-black"></video>
+                                <div class="flex gap-2 mt-2">
+                                    <button id="captureBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg text-sm">Capture Snapshot</button>
+                                    <button id="endSessionBtn" class="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg text-sm">End Session</button>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="mb-2 text-sm text-primary-600">Enrolled Students</div>
+                                <div id="studentsList" class="space-y-2 max-h-64 overflow-auto border border-gray-100 rounded-lg p-3 bg-gray-50"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -254,6 +276,9 @@
         function startAttendance() {
             const classCode = document.getElementById('classCodeInput').value.trim();
             if (classCode) {
+                // Navigate to server-side capture route which will open the OpenCV capture session
+                // This route runs server-side face recognition and opens a native camera window on the server.
+                hideClassCodeDialog();
                 window.location.href = `/capture/${classCode}`;
             } else {
                 alert('Please enter a valid class code');
@@ -350,6 +375,99 @@
 
         function viewMonthlyGraphs() {
             window.location.href = '/reports/monthly-graphs';
+        }
+
+        // --- Live attendance helpers ---
+        let mediaStream = null;
+
+        async function beginLiveSession(classCode) {
+            document.getElementById('liveClassCode').textContent = classCode;
+            document.getElementById('liveAttendanceUI').classList.remove('hidden');
+
+            // fetch students for the class
+            try {
+                const res = await fetch(`/api/class-students/${encodeURIComponent(classCode)}`);
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || 'Failed to fetch students');
+                renderStudentList(data.students || []);
+            } catch (e) {
+                alert('Could not fetch students for this class: ' + e.message);
+                renderStudentList([]);
+            }
+
+            // start camera
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+                const video = document.getElementById('cameraVideo');
+                video.srcObject = mediaStream;
+            } catch (e) {
+                alert('Unable to access camera: ' + e.message);
+            }
+        }
+
+        function renderStudentList(students) {
+            const container = document.getElementById('studentsList');
+            container.innerHTML = '';
+            if (!students || students.length === 0) {
+                container.innerHTML = '<div class="text-sm text-primary-600">No enrolled students found for this class.</div>';
+                return;
+            }
+            students.forEach(s => {
+                const el = document.createElement('div');
+                el.className = 'flex items-center justify-between bg-white p-2 rounded border border-gray-100';
+                el.innerHTML = `<div class="text-sm font-medium text-primary-900">${escapeHtml(s.name)}</div><div class="text-xs text-primary-600">${escapeHtml(s.id_number)}</div>`;
+                container.appendChild(el);
+            });
+        }
+
+        function escapeHtml(unsafe) {
+            return String(unsafe)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Capture a snapshot and send to server for processing (optional)
+        document.addEventListener('click', async (e) => {
+            if (e.target && e.target.id === 'captureBtn') {
+                const video = document.getElementById('cameraVideo');
+                if (!video || !mediaStream) return alert('Camera not started');
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg');
+
+                // Optional: POST to /face_capture or similar endpoint per-student registration
+                // For recognition logging, server-side capture route (/capture/<class>) uses OpenCV window and can't process this stream.
+                // We provide the snapshot download and preview, leaving recognition to server-side training/capture.
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = `snapshot_${Date.now()}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
+
+            if (e.target && e.target.id === 'endSessionBtn') {
+                endLiveSession();
+            }
+        });
+
+        function endLiveSession() {
+            // stop media
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(t => t.stop());
+                mediaStream = null;
+            }
+            const video = document.getElementById('cameraVideo');
+            if (video) video.srcObject = null;
+            document.getElementById('liveAttendanceUI').classList.add('hidden');
+            document.getElementById('liveClassCode').textContent = '';
+            document.getElementById('studentsList').innerHTML = '';
         }
 
     </script>
