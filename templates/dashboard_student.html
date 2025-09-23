@@ -280,21 +280,22 @@
 
     <script>
         // Show success notification
-        {% if user.just_logged_in %}
+        // Only run this script if the notification element exists (i.e., user.just_logged_in is true)
         window.addEventListener('load', function() {
             const notification = document.getElementById('successNotification');
-            setTimeout(() => {
-                notification.classList.remove('translate-x-full');
-                notification.classList.add('translate-x-0');
-            }, 100);
-            
-            // Auto-hide after 4 seconds
-            setTimeout(() => {
-                notification.classList.remove('translate-x-0');
-                notification.classList.add('translate-x-full');
-            }, 4000);
+            if (notification) {
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-full');
+                    notification.classList.add('translate-x-0');
+                }, 100);
+                
+                // Auto-hide after 4 seconds
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-0');
+                    notification.classList.add('translate-x-full');
+                }, 4000);
+            }
         });
-        {% endif %}
     </script>
 </body>
 </html>
