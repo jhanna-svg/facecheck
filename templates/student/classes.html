@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Classes - FaceCheck Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        },
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 font-sans">
+    <!-- Navigation Header -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0 h-10 w-10 bg-primary-800 rounded-lg flex items-center justify-center">
+                        <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-primary-900">FaceCheck</h1>
+                        <p class="text-xs text-primary-600">My Classes</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard" class="text-sm font-medium text-primary-600 hover:text-primary-800 transition-colors">
+                        Dashboard
+                    </a>
+                    <div class="h-6 w-px bg-gray-300"></div>
+                    <a href="/logout" class="text-sm font-medium text-red-600 hover:text-red-800 transition-colors">
+                        Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-primary-900 mb-2">My Classes</h2>
+            <p class="text-primary-600">View your enrolled classes, schedules, and faculty information</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-primary-600">Enrolled Classes</p>
+                        <p class="text-2xl font-bold text-primary-900">{{ enrolled_classes|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-primary-600">Active Classes</p>
+                        <p class="text-2xl font-bold text-green-600">{{ enrolled_classes|selectattr('0.status', 'equalto', 'active')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-primary-600">Total Units</p>
+                        <p class="text-2xl font-bold text-purple-600">
+                            {% set total_units = enrolled_classes|length * 3 %}
+                            {{ total_units }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classes Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+            {% for class_obj, student_class, faculty, faculty_user in enrolled_classes %}
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-200">
+                <!-- Class Header -->
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white">
+                    <h3 class="text-lg font-semibold">{{ class_obj.class_name }}</h3>
+                    <p class="text-blue-100 text-sm">{{ class_obj.edpcode }}</p>
+                </div>
+
+                <!-- Class Details -->
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <!-- Schedule -->
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-primary-700">Schedule</p>
+                                <p class="text-sm text-primary-600">
+                                    {{ class_obj.start_time.strftime('%I:%M %p') }} - {{ class_obj.end_time.strftime('%I:%M %p') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Room -->
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-primary-700">Room</p>
+                                <p class="text-sm text-primary-600">{{ class_obj.room }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Faculty -->
+                        {% if faculty_user %}
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-primary-700">Instructor</p>
+                                <p class="text-sm text-primary-600">{{ faculty_user.full_name }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Status -->
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-primary-700">Status</p>
+                                {% if class_obj.status == 'active' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    {{ class_obj.status|title }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-6 space-y-2">
+                        <button onclick="viewClassDetails('{{ class_obj.class_id }}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                            View Details
+                        </button>
+                        <a href="/student/attendance?class={{ class_obj.class_id }}" class="block w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200 text-center">
+                            View Attendance
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- No Classes Message -->
+            <div class="col-span-full">
+                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8 text-center">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-primary-900 mb-2">No Classes Enrolled</h3>
+                    <p class="text-primary-600 mb-4">You are not currently enrolled in any classes. Please contact your academic advisor for enrollment assistance.</p>
+                    <a href="/dashboard" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        Return to Dashboard
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Weekly Schedule -->
+        {% if enrolled_classes %}
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-primary-900">Weekly Schedule</h3>
+                <p class="text-sm text-primary-600">Your class schedule for this week</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-7 gap-2 mb-4">
+                    <!-- Day Headers -->
+                    <div class="text-center p-2 font-semibold text-primary-700 bg-gray-50 rounded">Sun</div>
+                    <div class="text-center p-2 font-semibold text-primary-700 bg-gray-50 rounded">Mon</div>
+                    <div class="text-center p-2 font-semibold text-primary-700 bg-gray-50 rounded">Tue</div>
+                    <div class="text-center p-2 font-semibold text-primary-700 bg-gray-50 rounded">Wed</div>
+                    <div class="text-center p-2 font-semibold text-primary-700 bg-gray-50 rounded">Thu</div>
+                    <div class="text-center p-2 font-semibold text-primary-700 bg-gray-50 rounded">Fri</div>
+                    <div class="text-center p-2 font-semibold text-primary-700 bg-gray-50 rounded">Sat</div>
+                </div>
+
+                <!-- Schedule Grid -->
+                <div class="grid grid-cols-7 gap-2">
+                    {% for day in range(7) %}
+                    <div class="min-h-32 p-2 bg-gray-50 rounded">
+                        <!-- Schedule items for each day would be populated here -->
+                        {% for class_obj, student_class, faculty, faculty_user in enrolled_classes %}
+                        <!-- This would require day information from ClassDay table -->
+                        <div class="bg-blue-100 text-blue-800 p-2 rounded mb-2 text-xs">
+                            <div class="font-medium">{{ class_obj.class_name }}</div>
+                            <div>{{ class_obj.start_time.strftime('%I:%M %p') }}</div>
+                            <div>{{ class_obj.room }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Class Details Modal -->
+    <div id="classDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 max-w-2xl mx-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-lg font-semibold text-primary-900">Class Details</h3>
+                <button onclick="closeClassDetailsModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="modalContent" class="space-y-4">
+                <!-- Content will be populated dynamically -->
+            </div>
+            
+            <div class="mt-6 flex space-x-4">
+                <button onclick="closeClassDetailsModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function viewClassDetails(classId) {
+            // In a real implementation, this would fetch class details from the server
+            document.getElementById('modalTitle').textContent = 'Class Details';
+            document.getElementById('modalContent').innerHTML = `
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p class="text-gray-600">Loading class details...</p>
+                </div>
+            `;
+            document.getElementById('classDetailsModal').classList.remove('hidden');
+            
+            // Simulate loading delay
+            setTimeout(() => {
+                document.getElementById('modalContent').innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-medium text-primary-700 mb-2">Class Information</h4>
+                            <p class="text-sm text-primary-600 mb-1"><strong>Code:</strong> CS101</p>
+                            <p class="text-sm text-primary-600 mb-1"><strong>Units:</strong> 3</p>
+                            <p class="text-sm text-primary-600 mb-1"><strong>Room:</strong> Room 201</p>
+                            <p class="text-sm text-primary-600"><strong>Schedule:</strong> MWF 9:00 AM - 10:00 AM</p>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-primary-700 mb-2">Instructor</h4>
+                            <p class="text-sm text-primary-600 mb-1"><strong>Name:</strong> Dr. John Smith</p>
+                            <p class="text-sm text-primary-600 mb-1"><strong>Position:</strong> Professor</p>
+                            <p class="text-sm text-primary-600"><strong>Office Hours:</strong> TTh 2:00 PM - 4:00 PM</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="font-medium text-primary-700 mb-2">Course Description</h4>
+                        <p class="text-sm text-primary-600">This course covers the fundamentals of computer science including programming concepts, algorithms, and data structures.</p>
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        function closeClassDetailsModal() {
+            document.getElementById('classDetailsModal').classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('classDetailsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeClassDetailsModal();
+            }
+        });
+    </script>
+</body>
+</html>

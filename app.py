@@ -2692,6 +2692,376 @@ def api_reports_monthly_graphs():
 
 
 
+# ---------------------
+# Student-specific decorators and utilities
+# ---------------------
+def require_student_login():
+    """Decorator to require student login and access to own data only"""
+    def decorator(fn):
+        def wrapper(*args, **kwargs):
+            if "user_id" not in session:
+                return redirect(url_for("login"))
+            if session.get("role") != "student":
+                return "Forbidden - Student access only", 403
+            return fn(*args, **kwargs)
+        wrapper.__name__ = fn.__name__
+        return wrapper
+    return decorator
+
+def get_current_student():
+    """Get current logged-in student object"""
+    if "user_id" not in session or session.get("role") != "student":
+        return None
+    
+    user = User.query.get(session["user_id"])
+    if not user or not user.student:
+        return None
+    
+    return user.student
+
+# ---------------------
+# Student Profile Management
+# ---------------------
+@app.route("/student/profile")
+@require_student_login()
+def student_profile():
+    """Student profile view and edit page"""
+    user = User.query.get(session["user_id"])
+    return render_template("student/profile.html", user=user)
+
+@app.route("/student/profile/update", methods=["POST"])
+@require_student_login()
+def update_student_profile():
+    """Update student profile information"""
+    user = User.query.get(session["user_id"])
+    
+    # Get form data
+    firstname = request.form.get("firstname", "").strip()
+    lastname = request.form.get("lastname", "").strip()
+    
+    if not firstname or not lastname:
+        return jsonify({"success": False, "message": "First name and last name are required"}), 400
+    
+    # Update user information
+    user.firstname = firstname
+    user.lastname = lastname
+    
+    try:
+        db.session.commit()
+        return jsonify({"success": True, "message": "Profile updated successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error updating profile: {str(e)}"}), 500
+
+@app.route("/student/password/change", methods=["POST"])
+@require_student_login()
+def change_student_password():
+    """Change student password"""
+    user = User.query.get(session["user_id"])
+    
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+    
+    # Validate current password
+    if not user.check_password(current_password):
+        return jsonify({"success": False, "message": "Current password is incorrect"}), 400
+    
+    # Validate new password
+    if len(new_password) < 6:
+        return jsonify({"success": False, "message": "New password must be at least 6 characters"}), 400
+    
+    if new_password != confirm_password:
+        return jsonify({"success": False, "message": "New passwords do not match"}), 400
+    
+    try:
+        user.set_password(new_password)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Password changed successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error changing password: {str(e)}"}), 500
+
+# ---------------------
+# Student Face Registration
+# ---------------------
+@app.route("/student/face-registration")
+@require_student_login()
+def student_face_registration():
+    """Face registration page for students"""
+    student = get_current_student()
+    return render_template("student/face_registration.html", student=student)
+
+@app.route("/student/face-registration/capture", methods=["POST"])
+@require_student_login()
+def capture_student_face():
+    """Capture and save student face for registration"""
+    student = get_current_student()
+    if not student:
+        return jsonify({"success": False, "message": "Student not found"}), 404
+    
+    try:
+        # Get image data from request
+        image_data = request.json.get("image_data")
+        if not image_data:
+            return jsonify({"success": False, "message": "No image data provided"}), 400
+        
+        # Process and save the image
+        success, message = process_and_save_image(str(student.student_id), image_data)
+        
+        if success:
+            # Update student record
+            student.attendance_image = f"{student.student_id}/face.jpg"
+            db.session.commit()
+            
+            # Retrain the model
+            train_success, train_message = train_lbph()
+            if not train_success:
+                print(f"Warning: Model training failed: {train_message}")
+            
+            return jsonify({"success": True, "message": "Face registered successfully"})
+        else:
+            return jsonify({"success": False, "message": message}), 500
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error registering face: {str(e)}"}), 500
+
+# ---------------------
+# Student Attendance Tracking
+# ---------------------
+@app.route("/student/attendance")
+@require_student_login()
+def student_attendance_view():
+    """Student attendance history and logs"""
+    student = get_current_student()
+    if not student:
+        return redirect(url_for("login"))
+    
+    # Get attendance records for this student
+    attendance_records = (
+        db.session.query(Attendance, StudentClass, Class)
+        .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+        .join(Class, StudentClass.class_id == Class.class_id)
+        .filter(StudentClass.student_id == student.student_id)
+        .order_by(Attendance.attendance_date.desc())
+        .limit(100)
+        .all()
+    )
+    
+    return render_template("student/attendance.html", 
+                         student=student, 
+                         attendance_records=attendance_records)
+
+@app.route("/student/attendance/log", methods=["POST"])
+@require_student_login()
+def log_student_attendance():
+    """Log attendance for a student (called by face recognition)"""
+    student = get_current_student()
+    if not student:
+        return jsonify({"success": False, "message": "Student not found"}), 404
+    
+    class_id = request.json.get("class_id")
+    if not class_id:
+        return jsonify({"success": False, "message": "Class ID required"}), 400
+    
+    # Check if student is enrolled in this class
+    student_class = StudentClass.query.filter_by(
+        student_id=student.student_id,
+        class_id=class_id
+    ).first()
+    
+    if not student_class:
+        return jsonify({"success": False, "message": "Student not enrolled in this class"}), 403
+    
+    # Check for duplicate attendance today
+    today = datetime.now().date()
+    existing_attendance = Attendance.query.filter(
+        Attendance.studentclass_id == student_class.studentclass_id,
+        Attendance.attendance_date >= datetime.combine(today, datetime.min.time()),
+        Attendance.attendance_date < datetime.combine(today, datetime.max.time())
+    ).first()
+    
+    if existing_attendance:
+        return jsonify({"success": False, "message": "Attendance already logged for today"}), 409
+    
+    # Log new attendance
+    try:
+        attendance = Attendance(
+            attendance_date=datetime.now(),
+            attendance_status="present",
+            studentclass_id=student_class.studentclass_id
+        )
+        db.session.add(attendance)
+        db.session.commit()
+        
+        return jsonify({"success": True, "message": "Attendance logged successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Error logging attendance: {str(e)}"}), 500
+
+# ---------------------
+# Student Class Management
+# ---------------------
+@app.route("/student/classes")
+@require_student_login()
+def student_classes():
+    """View enrolled classes and schedules"""
+    student = get_current_student()
+    if not student:
+        return redirect(url_for("login"))
+    
+    # Get enrolled classes with schedule information
+    enrolled_classes = (
+        db.session.query(Class, StudentClass, Faculty, User)
+        .join(StudentClass, Class.class_id == StudentClass.class_id)
+        .left_join(Faculty, Class.faculty_id == Faculty.faculty_id)
+        .left_join(User, Faculty.user_id == User.user_id)
+        .filter(StudentClass.student_id == student.student_id)
+        .all()
+    )
+    
+    return render_template("student/classes.html", 
+                         student=student, 
+                         enrolled_classes=enrolled_classes)
+
+@app.route("/student/events")
+@require_student_login()
+def student_events():
+    """View available events"""
+    student = get_current_student()
+    if not student:
+        return redirect(url_for("login"))
+    
+    # Get current and upcoming events
+    current_time = datetime.now()
+    events = Event.query.filter(Event.event_date >= current_time.date()).order_by(Event.event_date).all()
+    
+    return render_template("student/events.html", 
+                         student=student, 
+                         events=events)
+
+# ---------------------
+# Student Reports & Analytics
+# ---------------------
+@app.route("/student/reports")
+@require_student_login()
+def student_reports():
+    """Student personal reports and analytics"""
+    student = get_current_student()
+    if not student:
+        return redirect(url_for("login"))
+    
+    # Calculate attendance statistics
+    total_classes = (
+        db.session.query(StudentClass)
+        .filter(StudentClass.student_id == student.student_id)
+        .count()
+    )
+    
+    attended_classes = (
+        db.session.query(Attendance)
+        .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+        .filter(StudentClass.student_id == student.student_id)
+        .filter(Attendance.attendance_status == "present")
+        .count()
+    )
+    
+    attendance_rate = (attended_classes / total_classes * 100) if total_classes > 0 else 0
+    
+    # Get monthly attendance data for charts
+    from sqlalchemy import func, extract
+    monthly_data = (
+        db.session.query(
+            extract('month', Attendance.attendance_date).label('month'),
+            func.count(Attendance.attendance_id).label('count')
+        )
+        .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+        .filter(StudentClass.student_id == student.student_id)
+        .filter(Attendance.attendance_status == "present")
+        .filter(extract('year', Attendance.attendance_date) == datetime.now().year)
+        .group_by(extract('month', Attendance.attendance_date))
+        .all()
+    )
+    
+    stats = {
+        "total_classes": total_classes,
+        "attended_classes": attended_classes,
+        "attendance_rate": round(attendance_rate, 2),
+        "monthly_data": monthly_data
+    }
+    
+    return render_template("student/reports.html", 
+                         student=student, 
+                         stats=stats)
+
+@app.route("/student/reports/export/<format>")
+@require_student_login()
+def export_student_report(format):
+    """Export student attendance report in various formats"""
+    student = get_current_student()
+    if not student:
+        return redirect(url_for("login"))
+    
+    # Get attendance data
+    attendance_data = (
+        db.session.query(Attendance, StudentClass, Class)
+        .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
+        .join(Class, StudentClass.class_id == Class.class_id)
+        .filter(StudentClass.student_id == student.student_id)
+        .order_by(Attendance.attendance_date.desc())
+        .all()
+    )
+    
+    if format.lower() == "csv":
+        return export_attendance_csv(student, attendance_data)
+    elif format.lower() == "pdf":
+        return export_attendance_pdf(student, attendance_data)
+    elif format.lower() == "excel":
+        return export_attendance_excel(student, attendance_data)
+    else:
+        return "Invalid format", 400
+
+def export_attendance_csv(student, attendance_data):
+    """Export attendance data as CSV"""
+    import csv
+    from io import StringIO
+    from flask import make_response
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Write headers
+    writer.writerow(['Date', 'Class', 'Status', 'Time'])
+    
+    # Write data
+    for attendance, student_class, class_obj in attendance_data:
+        writer.writerow([
+            attendance.attendance_date.strftime('%Y-%m-%d'),
+            class_obj.class_name,
+            attendance.attendance_status,
+            attendance.attendance_date.strftime('%H:%M:%S')
+        ])
+    
+    output.seek(0)
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = f'attachment; filename=attendance_report_{student.student_id}.csv'
+    
+    return response
+
+def export_attendance_pdf(student, attendance_data):
+    """Export attendance data as PDF"""
+    # This would require reportlab or similar library
+    # For now, return a simple text response
+    return "PDF export functionality to be implemented", 501
+
+def export_attendance_excel(student, attendance_data):
+    """Export attendance data as Excel"""
+    # This would require openpyxl or similar library
+    # For now, return a simple text response
+    return "Excel export functionality to be implemented", 501
+
 if __name__ == "__main__":
     import signal
     import sys
