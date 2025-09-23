@@ -1,5 +1,5 @@
 import os, json, cv2, numpy as np, base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
@@ -222,6 +222,74 @@ def train_lbph():
         json.dump({v: k for k, v in id_map.items()}, f, indent=2)
 
     return True, f"Trained LBPH model with {len(id_map)} identities and {len(images)} images."
+
+def process_and_save_image(student_id, image_data):
+    """Process base64 image and save multiple training samples"""
+    try:
+        # Remove data URL prefix if present
+        if "data:image" in image_data:
+            image_data = image_data.split(",")[1]
+        
+        # Decode base64 image
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(BytesIO(image_bytes))
+        
+        # Convert to OpenCV format
+        opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        
+        # Convert to grayscale for face detection
+        gray = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
+        
+        # Load face detector
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        
+        # Detect faces
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+        if len(faces) == 0:
+            return False, 0, "No face detected in the image. Please ensure your face is clearly visible."
+        
+        if len(faces) > 1:
+            return False, 0, "Multiple faces detected. Please ensure only your face is visible."
+        
+        # Create directory for student
+        student_dir = path("data", "faces", str(student_id))
+        os.makedirs(student_dir, exist_ok=True)
+        
+        # Get the detected face
+        (x, y, w, h) = faces[0]
+        face_img = gray[y:y+h, x:x+w]
+        
+        # Resize to standard size
+        face_img = cv2.resize(face_img, (200, 200))
+        
+        # Generate multiple training samples with slight variations
+        image_count = 0
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Save original face
+        filename = f"{timestamp}_{image_count:03d}.jpg"
+        filepath = os.path.join(student_dir, filename)
+        cv2.imwrite(filepath, face_img)
+        image_count += 1
+        
+        # Generate variations for better training
+        variations = [
+            ("bright", cv2.convertScaleAbs(face_img, alpha=1.2, beta=10)),
+            ("dark", cv2.convertScaleAbs(face_img, alpha=0.8, beta=-10)),
+            ("contrast", cv2.convertScaleAbs(face_img, alpha=1.5, beta=0)),
+        ]
+        
+        for var_name, var_img in variations:
+            filename = f"{timestamp}_{var_name}_{image_count:03d}.jpg"
+            filepath = os.path.join(student_dir, filename)
+            cv2.imwrite(filepath, var_img)
+            image_count += 1
+        
+        return True, image_count, f"Successfully saved {image_count} training images."
+        
+    except Exception as e:
+        return False, 0, f"Error processing image: {str(e)}"
 
 # --- Routes ---
 @app.route("/")
@@ -1698,137 +1766,398 @@ def export_report():
     except Exception as e:
         return jsonify({"success": False, "message": f"Error exporting report: {e}"}), 500
 
-@app.route("/api/reports/export-history", methods=["GET"])
-def get_export_history():
-    """Get export history"""
-    if "user_id" not in session:
-        return jsonify({"success": False, "message": "Unauthorized"}), 403
+@app.route("/create-test-student")
+def create_test_student():
+    """Create a test student account for testing purposes"""
+    
+    # Check if test student already exists
+    existing_student = User.query.filter_by(idno="test_student").first()
+    if existing_student:
+        return """
+        <h2>Test student already exists!</h2>
+        <p><strong>Login credentials:</strong></p>
+        <ul>
+            <li>Username: <code>test_student</code></li>
+            <li>Password: <code>test123</code></li>
+        </ul>
+        <p><a href="/login">Go to Login Page</a></p>
+        """
     
     try:
-        # Mock export history data
-        # In a real implementation, this would come from a database table
-        history = [
-            {
-                "id": "1",
-                "name": "Monthly Attendance Report",
-                "format": "PDF",
-                "date": "2025-01-18 10:30 AM"
-            },
-            {
-                "id": "2", 
-                "name": "Class Summary Report",
-                "format": "Excel",
-                "date": "2025-01-17 02:15 PM"
-            }
-        ]
+        # Create test department if it doesn't exist
+        test_dept = Department.query.filter_by(dept_name="Computer Science").first()
+        if not test_dept:
+            test_dept = Department(dept_name="Computer Science")
+            db.session.add(test_dept)
+            db.session.flush()
         
-        return jsonify({"success": True, "history": history})
+        # Create test course if it doesn't exist
+        test_course = Course.query.filter_by(course_name="Bachelor of Science in Computer Science").first()
+        if not test_course:
+            test_course = Course(course_name="Bachelor of Science in Computer Science", dept_id=test_dept.dept_id)
+            db.session.add(test_course)
+            db.session.flush()
+        
+        # Create test user
+        test_user = User(
+            idno="test_student",
+            firstname="Test",
+            lastname="Student",
+            role="student",
+            dept_id=test_dept.dept_id
+        )
+        test_user.set_password("test123")
+        db.session.add(test_user)
+        db.session.flush()
+        
+        # Create student record
+        test_student = Student(
+            user_id=test_user.user_id,
+            year_level="3rd Year",
+            course_id=test_course.course_id
+        )
+        db.session.add(test_student)
+        db.session.commit()
+        
+        return """
+        <h2>✅ Test student created successfully!</h2>
+        <p><strong>Login credentials:</strong></p>
+        <ul>
+            <li>Username: <code>test_student</code></li>
+            <li>Password: <code>test123</code></li>
+        </ul>
+        <p><a href="/login">Go to Login Page</a></p>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+            a { color: #007bff; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+        </style>
+        """
         
     except Exception as e:
-        return jsonify({"success": False, "message": f"Error fetching export history: {e}"}), 500
+        db.session.rollback()
+        return f"""
+        <h2>❌ Error creating test student</h2>
+        <p>Error: {e}</p>
+        <p><a href="/">Go back</a></p>
+        """
 
-@app.route("/api/courses/<int:dept_id>", methods=["GET"])
-def get_courses_by_department(dept_id):
-    """Get courses filtered by department"""
-    if "user_id" not in session or session.get("role") != "admin":
-        return jsonify({"success": False, "message": "Unauthorized"}), 403
+@app.route("/create-admin-account")
+def create_admin_account():
+    """Create a professional admin account"""
+    
+    # Check if admin already exists
+    existing_admin = User.query.filter_by(idno="admin.system").first()
+    if existing_admin:
+        return """
+        <h2>Admin account already exists!</h2>
+        <p><strong>Login credentials:</strong></p>
+        <ul>
+            <li>Username: <code>admin.system</code></li>
+            <li>Password: <code>Admin@2025</code></li>
+        </ul>
+        <p><a href="/login">Go to Login Page</a></p>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+            a { color: #007bff; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+        </style>
+        """
+    
     try:
-        courses = Course.query.filter_by(dept_id=dept_id).all()
-        courses_data = [{"id": c.course_id, "name": c.course_name} for c in courses]
-        return jsonify({"success": True, "courses": courses_data})
+        # Create admin department if it doesn't exist
+        admin_dept = Department.query.filter_by(dept_name="Information Technology Services").first()
+        if not admin_dept:
+            admin_dept = Department(dept_name="Information Technology Services")
+            db.session.add(admin_dept)
+            db.session.flush()
+        
+        # Create admin user
+        admin_user = User(
+            idno="admin.system",
+            firstname="System",
+            lastname="Administrator",
+            role="admin",
+            dept_id=admin_dept.dept_id
+        )
+        admin_user.set_password("Admin@2025")
+        db.session.add(admin_user)
+        db.session.commit()
+        
+        return """
+        <h2>✅ Admin account created successfully!</h2>
+        <p><strong>Login credentials:</strong></p>
+        <ul>
+            <li>Username: <code>admin.system</code></li>
+            <li>Password: <code>Admin@2025</code></li>
+        </ul>
+        <p><a href="/login">Go to Login Page</a></p>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+            a { color: #007bff; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+        </style>
+        """
+        
     except Exception as e:
-        return jsonify({"success": False, "message": f"Error fetching courses: {e}"}), 500
+        db.session.rollback()
+        return f"""
+        <h2>❌ Error creating admin account</h2>
+        <p>Error: {e}</p>
+        <p><a href="/">Go back</a></p>
+        """
 
-
-
-def process_and_save_image(student_id, image_data):
-    """Process base64 image data and save multiple training images (for face capture in dashboard)"""
+@app.route("/create-faculty-account")
+def create_faculty_account():
+    """Create a professional faculty account"""
+    
+    # Check if faculty already exists
+    existing_faculty = User.query.filter_by(idno="faculty.prof").first()
+    if existing_faculty:
+        return """
+        <h2>Faculty account already exists!</h2>
+        <p><strong>Login credentials:</strong></p>
+        <ul>
+            <li>Username: <code>faculty.prof</code></li>
+            <li>Password: <code>Faculty@2025</code></li>
+        </ul>
+        <p><a href="/login">Go to Login Page</a></p>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+            a { color: #007bff; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+        </style>
+        """
+    
     try:
-        # Decode base64 image data
-        if image_data.startswith('data:image'):
-            # Remove the data:image/jpeg;base64, prefix
-            image_data = image_data.split(',')[1]
+        # Create faculty department if it doesn't exist
+        faculty_dept = Department.query.filter_by(dept_name="Computer Science").first()
+        if not faculty_dept:
+            faculty_dept = Department(dept_name="Computer Science")
+            db.session.add(faculty_dept)
+            db.session.flush()
         
-        # Decode base64 to bytes
-        image_bytes = base64.b64decode(image_data)
+        # Create faculty user
+        faculty_user = User(
+            idno="faculty.prof",
+            firstname="Dr. Maria",
+            lastname="Rodriguez",
+            role="faculty",
+            dept_id=faculty_dept.dept_id
+        )
+        faculty_user.set_password("Faculty@2025")
+        db.session.add(faculty_user)
+        db.session.flush()
         
-        # Open image with PIL
-        image = Image.open(BytesIO(image_bytes))
+        # Create faculty record
+        faculty_record = Faculty(
+            user_id=faculty_user.user_id,
+            position="Professor"
+        )
+        db.session.add(faculty_record)
+        db.session.commit()
         
-        # Convert to RGB if necessary
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        
-        # Ensure destination folder exists
-        dest = path("data", "faces", student_id)
-        os.makedirs(dest, exist_ok=True)
-
-        # Convert PIL image to OpenCV format for face detection
-        cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-        gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-        
-        # Initialize face cascade for cropping
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(100, 100))
-        
-        saved_count = 0
-        
-        if len(faces) > 0:
-            # Use the largest detected face
-            x, y, w, h = max(faces, key=lambda face: face[2] * face[3])
-            
-            # Extract face region with some padding
-            padding = int(max(w, h) * 0.2)
-            x1 = max(0, x - padding)
-            y1 = max(0, y - padding)
-            x2 = min(cv_image.shape[1], x + w + padding)
-            y2 = min(cv_image.shape[0], y + h + padding)
-            
-            face_roi = gray[y1:y2, x1:x2]
-            
-            # Create multiple versions of the image for better training
-            variations = [
-                face_roi,  # Original
-                cv2.equalizeHist(face_roi),  # Histogram equalization
-                cv2.GaussianBlur(face_roi, (3, 3), 0),  # Slight blur
-                cv2.bilateralFilter(face_roi, 9, 75, 75),  # Noise reduction
-            ]
-            
-            # Add brightness variations
-            for brightness in [-20, 0, 20]:
-                adjusted = cv2.convertScaleAbs(face_roi, alpha=1.0, beta=brightness)
-                variations.append(adjusted)
-            
-            # Save all variations
-            for i, variation in enumerate(variations):
-                if saved_count >= 20:  # Limit to 20 images
-                    break
-
-                # Resize to standard size
-                variation = cv2.resize(variation, (200, 200))
-                
-                # Save image
-                filename = f"{saved_count + 1}.jpg"
-                filepath = os.path.join(dest, filename)
-                cv2.imwrite(filepath, variation)
-                saved_count += 1
-        
-        else:
-            # No face detected, save the whole image resized
-            # Convert back to grayscale and resize
-            full_image = cv2.resize(gray, (200, 200))
-            filename = "1.jpg"
-            filepath = os.path.join(dest, filename)
-            cv2.imwrite(filepath, full_image)
-            saved_count = 1
-        
-        return True, saved_count, "Images processed and saved successfully"
+        return """
+        <h2>✅ Faculty account created successfully!</h2>
+        <p><strong>Login credentials:</strong></p>
+        <ul>
+            <li>Username: <code>faculty.prof</code></li>
+            <li>Password: <code>Faculty@2025</code></li>
+        </ul>
+        <p><strong>Faculty Details:</strong></p>
+        <ul>
+            <li>Name: Dr. Maria Rodriguez</li>
+            <li>Position: Professor</li>
+            <li>Department: Computer Science</li>
+        </ul>
+        <p><a href="/login">Go to Login Page</a></p>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+            a { color: #007bff; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+        </style>
+        """
         
     except Exception as e:
-        return False, 0, f"Error processing image: {str(e)}"
+        db.session.rollback()
+        return f"""
+        <h2>❌ Error creating faculty account</h2>
+        <p>Error: {e}</p>
+        <p><a href="/">Go back</a></p>
+        """
 
+@app.route("/create-all-accounts")
+def create_all_accounts():
+    """Create all professional accounts at once"""
+    try:
+        # Create departments
+        it_dept = Department.query.filter_by(dept_name="Information Technology Services").first()
+        if not it_dept:
+            it_dept = Department(dept_name="Information Technology Services")
+            db.session.add(it_dept)
+            db.session.flush()
+        
+        cs_dept = Department.query.filter_by(dept_name="Computer Science").first()
+        if not cs_dept:
+            cs_dept = Department(dept_name="Computer Science")
+            db.session.add(cs_dept)
+            db.session.flush()
+        
+        # Create course
+        cs_course = Course.query.filter_by(course_name="Bachelor of Science in Computer Science").first()
+        if not cs_course:
+            cs_course = Course(course_name="Bachelor of Science in Computer Science", dept_id=cs_dept.dept_id)
+            db.session.add(cs_course)
+            db.session.flush()
+        
+        # Create admin account
+        admin_exists = User.query.filter_by(idno="admin.system").first()
+        if not admin_exists:
+            admin_user = User(
+                idno="admin.system",
+                firstname="System",
+                lastname="Administrator",
+                role="admin",
+                dept_id=it_dept.dept_id
+            )
+            admin_user.set_password("Admin@2025")
+            db.session.add(admin_user)
+        
+        # Create faculty account
+        faculty_exists = User.query.filter_by(idno="faculty.prof").first()
+        if not faculty_exists:
+            faculty_user = User(
+                idno="faculty.prof",
+                firstname="Dr. Maria",
+                lastname="Rodriguez",
+                role="faculty",
+                dept_id=cs_dept.dept_id
+            )
+            faculty_user.set_password("Faculty@2025")
+            db.session.add(faculty_user)
+            db.session.flush()
+            
+            faculty_record = Faculty(
+                user_id=faculty_user.user_id,
+                position="Professor"
+            )
+            db.session.add(faculty_record)
+        
+        # Create student account
+        student_exists = User.query.filter_by(idno="student.doe").first()
+        if not student_exists:
+            student_user = User(
+                idno="student.doe",
+                firstname="John",
+                lastname="Doe",
+                role="student",
+                dept_id=cs_dept.dept_id
+            )
+            student_user.set_password("Student@2025")
+            db.session.add(student_user)
+            db.session.flush()
+            
+            student_record = Student(
+                user_id=student_user.user_id,
+                year_level="3rd Year",
+                course_id=cs_course.course_id
+            )
+            db.session.add(student_record)
+        
+        db.session.commit()
+        
+        return """
+        <h2>✅ All professional accounts created successfully!</h2>
+        
+        <h3>👤 Admin Account</h3>
+        <ul>
+            <li>Username: <code>admin.system</code></li>
+            <li>Password: <code>Admin@2025</code></li>
+            <li>Role: System Administrator</li>
+        </ul>
+        
+        <h3>👨‍🏫 Faculty Account</h3>
+        <ul>
+            <li>Username: <code>faculty.prof</code></li>
+            <li>Password: <code>Faculty@2025</code></li>
+            <li>Name: Dr. Maria Rodriguez</li>
+            <li>Position: Professor</li>
+        </ul>
+        
+        <h3>👨‍🎓 Student Account</h3>
+        <ul>
+            <li>Username: <code>student.doe</code></li>
+            <li>Password: <code>Student@2025</code></li>
+            <li>Name: John Doe</li>
+            <li>Year: 3rd Year Computer Science</li>
+        </ul>
+        
+        <p><a href="/login">Go to Login Page</a></p>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+            a { color: #007bff; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+            h3 { color: #333; margin-top: 30px; }
+        </style>
+        """
+        
+    except Exception as e:
+        db.session.rollback()
+        return f"""
+        <h2>❌ Error creating accounts</h2>
+        <p>Error: {e}</p>
+        <p><a href="/">Go back</a></p>
+        """
 
-# Old register_capture route removed - now using in-browser camera capture
+@app.route("/routes")
+def list_routes():
+    """List all available routes for debugging"""
+    import urllib.parse
+    output = []
+    for rule in app.url_map.iter_rules():
+        options = {}
+        for arg in rule.arguments:
+            options[arg] = "[{0}]".format(arg)
+
+        methods = ','.join(rule.methods)
+        url = rule.rule
+        line = urllib.parse.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, url))
+        output.append(line)
+    
+    routes_html = "<br>".join(sorted(output))
+    
+    return f"""
+    <h2>🗺️ Available Routes</h2>
+    <p>Server is running on: <strong>http://localhost:5000</strong></p>
+    
+    <h3>📋 Quick Access Links:</h3>
+    <ul style="list-style-type: none; padding: 0;">
+        <li>🏠 <a href="/">Home (redirects to login)</a></li>
+        <li>🔐 <a href="/login">Login Page</a></li>
+        <li>👤 <a href="/create-all-accounts">Create All Professional Accounts</a></li>
+        <li>🧑‍💼 <a href="/create-admin-account">Create Admin Account</a></li>
+        <li>👨‍🏫 <a href="/create-faculty-account">Create Faculty Account</a></li>
+        <li>👨‍🎓 <a href="/create-test-student">Create Student Account</a></li>
+    </ul>
+    
+    <h3>🔧 All Available Routes:</h3>
+    <pre style="background: #f4f4f4; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+{routes_html}
+    </pre>
+    
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 40px; }}
+        a {{ color: #007bff; text-decoration: none; }}
+        a:hover {{ text-decoration: underline; }}
+        li {{ margin: 8px 0; }}
+    </style>
+    """
 
 @app.route("/train")
 def train():
@@ -1853,8 +2182,73 @@ def face_capture():
     if not user or user.username != student_id:
         return jsonify({"success": False, "message": "You can only register your own face."}), 403
     
-    # Process and save the image
-    success, image_count, message = process_and_save_image(student_id, image_data)
+    # Process and save the image inline
+    try:
+        # Remove data URL prefix if present  
+        if "data:image" in image_data:
+            image_data = image_data.split(",")[1]
+        
+        # Decode base64 image
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(BytesIO(image_bytes))
+        
+        # Convert to OpenCV format
+        opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        
+        # Convert to grayscale for face detection
+        gray = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
+        
+        # Load face detector
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        
+        # Detect faces
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+        if len(faces) == 0:
+            return jsonify({"success": False, "message": "No face detected in the image. Please ensure your face is clearly visible."}), 400
+        
+        if len(faces) > 1:
+            return jsonify({"success": False, "message": "Multiple faces detected. Please ensure only your face is visible."}), 400
+        
+        # Create directory for student
+        student_dir = path("data", "faces", str(student_id))
+        os.makedirs(student_dir, exist_ok=True)
+        
+        # Get the detected face
+        (x, y, w, h) = faces[0]
+        face_img = gray[y:y+h, x:x+w]
+        
+        # Resize to standard size
+        face_img = cv2.resize(face_img, (200, 200))
+        
+        # Generate multiple training samples with slight variations
+        image_count = 0
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Save original face
+        filename = f"{timestamp}_{image_count:03d}.jpg"
+        filepath = os.path.join(student_dir, filename)
+        cv2.imwrite(filepath, face_img)
+        image_count += 1
+        
+        # Generate variations for better training
+        variations = [
+            ("bright", cv2.convertScaleAbs(face_img, alpha=1.2, beta=10)),
+            ("dark", cv2.convertScaleAbs(face_img, alpha=0.8, beta=-10)), 
+            ("contrast", cv2.convertScaleAbs(face_img, alpha=1.5, beta=0)),
+        ]
+        
+        for var_name, var_img in variations:
+            filename = f"{timestamp}_{var_name}_{image_count:03d}.jpg"
+            filepath = os.path.join(student_dir, filename)
+            cv2.imwrite(filepath, var_img)
+            image_count += 1
+            
+        success = True
+        message = f"Successfully saved {image_count} training images."
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error processing image: {str(e)}"}), 500
     
     if not success:
         return jsonify({"success": False, "message": message}), 500
@@ -2415,7 +2809,7 @@ def export_reports_excel():
 @require_login_role("faculty")
 def reports_overview():
     """Display the reports overview page with links to different report types"""
-    # Get user information for the template
+    # Get user information
     user = User.query.get(session["user_id"])
     if not user:
         return redirect(url_for("login"))
@@ -2650,7 +3044,7 @@ def api_reports_monthly_graphs():
         q = (
             db.session.query(
                 db.func.strftime('%Y-%m', Attendance.attendance_date).label('month'),
-                db.func.count(Attendance.attendance_id).label('count')
+                func.count(Attendance.attendance_id).label('count')
             )
             .join(StudentClass, Attendance.studentclass_id == StudentClass.studentclass_id)
             .join(Class, StudentClass.class_id == Class.class_id)
@@ -2806,8 +3200,73 @@ def capture_student_face():
         if not image_data:
             return jsonify({"success": False, "message": "No image data provided"}), 400
         
-        # Process and save the image
-        success, message = process_and_save_image(str(student.student_id), image_data)
+        # Process and save the image inline
+        try:
+            # Remove data URL prefix if present
+            if "data:image" in image_data:
+                image_data = image_data.split(",")[1]
+            
+            # Decode base64 image
+            image_bytes = base64.b64decode(image_data)
+            image = Image.open(BytesIO(image_bytes))
+            
+            # Convert to OpenCV format
+            opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+            
+            # Convert to grayscale for face detection
+            gray = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
+            
+            # Load face detector
+            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            
+            # Detect faces
+            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+            
+            if len(faces) == 0:
+                return jsonify({"success": False, "message": "No face detected in the image. Please ensure your face is clearly visible."}), 400
+            
+            if len(faces) > 1:
+                return jsonify({"success": False, "message": "Multiple faces detected. Please ensure only your face is visible."}), 400
+            
+            # Create directory for student
+            student_dir = path("data", "faces", str(student.student_id))
+            os.makedirs(student_dir, exist_ok=True)
+            
+            # Get the detected face
+            (x, y, w, h) = faces[0]
+            face_img = gray[y:y+h, x:x+w]
+            
+            # Resize to standard size
+            face_img = cv2.resize(face_img, (200, 200))
+            
+            # Generate multiple training samples with slight variations
+            image_count = 0
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Save original face
+            filename = f"{timestamp}_{image_count:03d}.jpg"
+            filepath = os.path.join(student_dir, filename)
+            cv2.imwrite(filepath, face_img)
+            image_count += 1
+            
+            # Generate variations for better training
+            variations = [
+                ("bright", cv2.convertScaleAbs(face_img, alpha=1.2, beta=10)),
+                ("dark", cv2.convertScaleAbs(face_img, alpha=0.8, beta=-10)),
+                ("contrast", cv2.convertScaleAbs(face_img, alpha=1.5, beta=0)),
+            ]
+            
+            for var_name, var_img in variations:
+                filename = f"{timestamp}_{var_name}_{image_count:03d}.jpg"
+                filepath = os.path.join(student_dir, filename)
+                cv2.imwrite(filepath, var_img)
+                image_count += 1
+                
+            success = True
+            message = f"Successfully saved {image_count} training images."
+            
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Error processing image: {str(e)}"}), 500
         
         if success:
             # Update student record
